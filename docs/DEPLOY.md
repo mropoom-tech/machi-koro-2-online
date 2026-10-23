@@ -1,4 +1,11 @@
-# คู่มือ Deploy (ยังไม่ได้ Deploy จริง — ต้องได้รับอนุญาตก่อน)
+# คู่มือ Deploy
+
+**สถานะ (2026-10-23): Deploy แล้ว**
+- เว็บ: https://mropoom-tech.github.io/machi-koro-2-online/
+- Worker: https://machi-koro-2-online.mropoomkung.workers.dev
+- Repo: https://github.com/mropoom-tech/machi-koro-2-online
+
+บัญชีใหม่ต้องเปิดหน้า Workers & Pages ใน Dashboard หนึ่งครั้งเพื่อสร้างโดเมนย่อย `workers.dev` ก่อน deploy ครั้งแรก (error 10063)
 
 ## 1. Cloudflare Worker + Durable Objects
 1. สมัคร/ล็อกอิน Cloudflare (แผน Workers Free) แล้วรัน `npx wrangler login` ใน `apps/worker`

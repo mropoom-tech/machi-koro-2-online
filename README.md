@@ -29,5 +29,8 @@ node apps/worker/scripts/smoke.mjs http://127.0.0.1:8787 5
 node apps/worker/scripts/fullgame.mjs http://127.0.0.1:8787 4
 ```
 
+## เล่นออนไลน์
+https://mropoom-tech.github.io/machi-koro-2-online/
+
 ## Deploy
-ดู `docs/DEPLOY.md` (ยังไม่ได้ deploy)
+ดู `docs/DEPLOY.md`

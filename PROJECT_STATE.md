@@ -8,7 +8,7 @@
 | M2 Backend & Multiplayer | ✅ (local) | Worker + DO `GameRoom`, REST + WS, token auth, idempotency, state version, persistence, reconnect, TTL alarm |
 | M3 Frontend | ✅ | Landing, Create/Join, Lobby, Board, Card modal, Dice animation, Choice dialogs, Log, Victory, mobile layout |
 | M4 Integration | ✅ (local) | smoke 2/3/5 ผู้เล่น + bot เล่นจนจบเกม 2/4/5 ผู้เล่น + ทดสอบ 2 แท็บใน browser จริง (สร้าง/เข้าร่วม/สร้างการ์ด/ทอย/refresh กลับเข้าห้อง/มือถือ) |
-| M5 Deploy Prep | ✅ เตรียมแล้ว / ❌ ยังไม่ deploy | `.github/workflows/*`, `wrangler.toml`, `docs/DEPLOY.md` — **รออนุญาตก่อน deploy** |
+| M5 Deploy | ✅ Deploy แล้ว (2026-10-23) | เว็บ: https://mropoom-tech.github.io/machi-koro-2-online/ · Worker: https://machi-koro-2-online.mropoomkung.workers.dev · Repo: https://github.com/mropoom-tech/machi-koro-2-online |
 
 ## สถาปัตยกรรม (สั้น)
 - Engine: `applyAction(state, playerId, action)` คืน state ใหม่ (structuredClone), RNG mulberry32 เก็บใน state, `toPublic()` ตัดกองการ์ด/RNG ก่อนส่ง client
@@ -28,6 +28,12 @@
 - `host.mjs` (ออกจากห้อง / มอบหัวห้อง / โอนอัตโนมัติหลังหลุด 30 วิ) → ALL PASSED
 - `fullgame.mjs` 2/4/5 ผู้เล่น → จบเกมด้วยแลนด์มาร์ก 3 แห่ง, action หลังจบถูกปฏิเสธ, ทุก client state ตรงกัน
 
+## Production
+- Cloudflare account: mropoomkung@gmail.com (`377f1456…`), Worker `machi-koro-2-online`, `ALLOWED_ORIGINS=https://mropoom-tech.github.io` (local dev ใช้ `apps/worker/.dev.vars` = `*`)
+- GitHub Pages deploy อัตโนมัติทุกครั้งที่ push `main` (repo variables: `VITE_API_URL`, `ALLOWED_ORIGINS`)
+- Deploy Worker ใหม่: `npx wrangler deploy` ใน `apps/worker` (ต้องรันใน Terminal ของผู้ใช้ — shell ของ agent อ่านไฟล์ login Wrangler คนละที่ ซึ่งยังเป็นบัญชีเก่า pcpdata117)
+- ทดสอบบน production: smoke 3 คน ALL PASSED, CORS: origin อื่นได้ 403, เล่น 2 แท็บบนเว็บจริง (สร้าง/เข้าร่วม/สร้างการ์ด/ทอย) ซิงก์ตรงกัน
+
 ## ปัญหา/ความเสี่ยงที่ยังเหลือ
 1. **จำนวนสำเนาการ์ดไม่มีหลักฐาน** → DEMO_ONLY (ดู `docs/RULE_ISSUES.md`) — ต้องการ Rulebook ต้นฉบับ
 2. ข้อสันนิษฐานกติกา #3–#11 ใน RULE_ISSUES ต้องตรวจกับ Rulebook
@@ -36,9 +42,10 @@
 5. ส่ง snapshot ทั้งห้องทุกครั้ง (ไม่ใช่ delta) — ขนาดเล็ก (~5–10 KB) จึงยังไม่จำเป็น
 6. (ปิดแล้ว) ระบบห้องครบ: ออก / มอบหัวห้อง / เชิญออก / ข้ามเทิร์น / นำออก / ยอมแพ้
 7. Wrangler 3.x (มี v4 แล้ว) — ควรอัปเดตก่อน deploy; npm บล็อก postinstall ของ esbuild/workerd แต่ยังรันได้
-8. ยังไม่ได้ทดสอบบน Cloudflare จริง (hibernation จริง, latency, โควตา)
+8. ยังไม่ได้ทดสอบ hibernation ระยะยาว/latency กับผู้เล่นหลายเครื่องจริง; ควรดูโควตาใน Dashboard (Free: 100,000 requests/วัน ตามที่ Dashboard แสดง)
 
 ## Milestone ถัดไป
 - ได้ Rulebook → กรอก `quantityInDeck` + ปิดประเด็น RULE_ISSUES → เปิดโหมด VERIFIED
-- (ขออนุญาต) deploy Worker + GitHub Pages ตาม `docs/DEPLOY.md` แล้วทดสอบกับเพื่อนจริง
+- ทดสอบกับเพื่อนจริงหลายเครื่อง
+- อัปเดต GitHub Actions เป็นเวอร์ชันที่รองรับ Node 24 และ Wrangler v4
 - เพิ่ม: เสียง/แอนิเมชันเหรียญ, ภาพการ์ดเมื่อได้สิทธิ์

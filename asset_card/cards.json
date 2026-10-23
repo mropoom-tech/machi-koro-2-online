@@ -1,0 +1,1308 @@
+{
+  "metadata": {
+    "title": "Machi Koro 2 Online - source-based card inventory (DRAFT)",
+    "rulebook": "machi-koro-2_Rulebook-FINAL.indd.pdf",
+    "establishment_types_from_images": 20,
+    "landmark_types_from_images": 23,
+    "rulebook_stated_establishment_cards": 86,
+    "rulebook_stated_landmark_cards": 20,
+    "establishment_count_per_type": "unknown: user must supply copies per type; null is intentional",
+    "landmark_pool": "unverified: 23 distinct faces shown, rulebook says 20 landmark cards total",
+    "effect_spec_status": "draft machine-readable interpretation, not yet validated by complete playtests",
+    "source": "only the user supplied card composite images and 8-page rulebook"
+  },
+  "establishments": [
+    {
+      "id": "sushi_bar",
+      "name_en": "Sushi Bar",
+      "kind": "establishment",
+      "deck": "1-6",
+      "category": "red",
+      "symbol": "cup",
+      "activation_numbers": [
+        1
+      ],
+      "build_cost": 2,
+      "ability_text_en": "Take 3 coins from the active player. (opponent’s turn)",
+      "effect_spec_draft": {
+        "op": "take_from_active",
+        "amount": 3,
+        "when": "opponent_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/sushi_bar.jpg",
+      "image_source": "cardlist_1-6.jpg",
+      "source_grid": [
+        0,
+        0
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "wheat_field",
+      "name_en": "Wheat Field",
+      "kind": "establishment",
+      "deck": "1-6",
+      "category": "blue",
+      "symbol": "wheat",
+      "activation_numbers": [
+        1,
+        2
+      ],
+      "build_cost": 1,
+      "ability_text_en": "Get 1 coin from the bank. (anyone’s turn)",
+      "effect_spec_draft": {
+        "op": "bank_income",
+        "amount": 1,
+        "when": "any_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/wheat_field.jpg",
+      "image_source": "cardlist_1-6.jpg",
+      "source_grid": [
+        0,
+        1
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "vineyard",
+      "name_en": "Vineyard",
+      "kind": "establishment",
+      "deck": "1-6",
+      "category": "blue",
+      "symbol": "fruit",
+      "activation_numbers": [
+        2
+      ],
+      "build_cost": 1,
+      "ability_text_en": "Get 2 coins from the bank. (anyone’s turn)",
+      "effect_spec_draft": {
+        "op": "bank_income",
+        "amount": 2,
+        "when": "any_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/vineyard.jpg",
+      "image_source": "cardlist_1-6.jpg",
+      "source_grid": [
+        0,
+        2
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "bakery",
+      "name_en": "Bakery",
+      "kind": "establishment",
+      "deck": "1-6",
+      "category": "green",
+      "symbol": "shop",
+      "activation_numbers": [
+        2,
+        3
+      ],
+      "build_cost": 1,
+      "ability_text_en": "Get 2 coins from the bank. (your turn only)",
+      "effect_spec_draft": {
+        "op": "bank_income",
+        "amount": 2,
+        "when": "owner_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/bakery.jpg",
+      "image_source": "cardlist_1-6.jpg",
+      "source_grid": [
+        0,
+        3
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "cafe",
+      "name_en": "Café",
+      "kind": "establishment",
+      "deck": "1-6",
+      "category": "red",
+      "symbol": "cup",
+      "activation_numbers": [
+        3
+      ],
+      "build_cost": 1,
+      "ability_text_en": "Take 2 coins from the active player. (opponent’s turn)",
+      "effect_spec_draft": {
+        "op": "take_from_active",
+        "amount": 2,
+        "when": "opponent_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/cafe.jpg",
+      "image_source": "cardlist_1-6.jpg",
+      "source_grid": [
+        1,
+        0
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "convenience_store",
+      "name_en": "Convenience Store",
+      "kind": "establishment",
+      "deck": "1-6",
+      "category": "green",
+      "symbol": "shop",
+      "activation_numbers": [
+        4
+      ],
+      "build_cost": 1,
+      "ability_text_en": "Get 3 coins from the bank. (your turn only)",
+      "effect_spec_draft": {
+        "op": "bank_income",
+        "amount": 3,
+        "when": "owner_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/convenience_store.jpg",
+      "image_source": "cardlist_1-6.jpg",
+      "source_grid": [
+        1,
+        1
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "flower_garden",
+      "name_en": "Flower Garden",
+      "kind": "establishment",
+      "deck": "1-6",
+      "category": "blue",
+      "symbol": "flower",
+      "activation_numbers": [
+        4
+      ],
+      "build_cost": 2,
+      "ability_text_en": "Get 2 coins from the bank. (anyone’s turn)",
+      "effect_spec_draft": {
+        "op": "bank_income",
+        "amount": 2,
+        "when": "any_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/flower_garden.jpg",
+      "image_source": "cardlist_1-6.jpg",
+      "source_grid": [
+        1,
+        2
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "forest",
+      "name_en": "Forest",
+      "kind": "establishment",
+      "deck": "1-6",
+      "category": "blue",
+      "symbol": "gear",
+      "activation_numbers": [
+        5
+      ],
+      "build_cost": 3,
+      "ability_text_en": "Get 2 coins from the bank. (anyone’s turn)",
+      "effect_spec_draft": {
+        "op": "bank_income",
+        "amount": 2,
+        "when": "any_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/forest.jpg",
+      "image_source": "cardlist_1-6.jpg",
+      "source_grid": [
+        1,
+        3
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "business_center",
+      "name_en": "Business Center",
+      "kind": "establishment",
+      "deck": "1-6",
+      "category": "purple",
+      "symbol": "major",
+      "activation_numbers": [
+        6
+      ],
+      "build_cost": 3,
+      "ability_text_en": "Exchange 1 of your establishments for 1 an opponent owns. (your turn only)",
+      "effect_spec_draft": {
+        "op": "exchange_establishments",
+        "optional": true,
+        "when": "owner_turn",
+        "choice_required": true
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/business_center.jpg",
+      "image_source": "cardlist_1-6.jpg",
+      "source_grid": [
+        2,
+        0
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "flower_shop",
+      "name_en": "Flower Shop",
+      "kind": "establishment",
+      "deck": "1-6",
+      "category": "green",
+      "symbol": "flower",
+      "activation_numbers": [
+        6
+      ],
+      "build_cost": 1,
+      "ability_text_en": "Get 3 coins from the bank for each flower-symbol establishment you own. (your turn only)",
+      "effect_spec_draft": {
+        "op": "bank_income_by_symbol",
+        "symbol": "flower",
+        "per_copy": 3,
+        "when": "owner_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/flower_shop.jpg",
+      "image_source": "cardlist_1-6.jpg",
+      "source_grid": [
+        2,
+        1
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "corn_field",
+      "name_en": "Corn Field",
+      "kind": "establishment",
+      "deck": "7-12",
+      "category": "blue",
+      "symbol": "wheat",
+      "activation_numbers": [
+        7
+      ],
+      "build_cost": 2,
+      "ability_text_en": "Get 3 coins from the bank. (anyone’s turn)",
+      "effect_spec_draft": {
+        "op": "bank_income",
+        "amount": 3,
+        "when": "any_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/corn_field.jpg",
+      "image_source": "cardlist_7-12.jpg",
+      "source_grid": [
+        0,
+        0
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "stadium",
+      "name_en": "Stadium",
+      "kind": "establishment",
+      "deck": "7-12",
+      "category": "purple",
+      "symbol": "major",
+      "activation_numbers": [
+        7
+      ],
+      "build_cost": 3,
+      "ability_text_en": "Take 3 coins from each opponent. (your turn only)",
+      "effect_spec_draft": {
+        "op": "take_each_opponent",
+        "amount": 3,
+        "when": "owner_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/stadium.jpg",
+      "image_source": "cardlist_7-12.jpg",
+      "source_grid": [
+        0,
+        1
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "furniture_factory",
+      "name_en": "Furniture Factory",
+      "kind": "establishment",
+      "deck": "7-12",
+      "category": "green",
+      "symbol": "gear",
+      "activation_numbers": [
+        8
+      ],
+      "build_cost": 4,
+      "ability_text_en": "Get 4 coins from the bank for each gear-symbol establishment you own. (your turn only)",
+      "effect_spec_draft": {
+        "op": "bank_income_by_symbol",
+        "symbol": "gear",
+        "per_copy": 4,
+        "when": "owner_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/furniture_factory.jpg",
+      "image_source": "cardlist_7-12.jpg",
+      "source_grid": [
+        0,
+        2
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "hamburger_stand",
+      "name_en": "Hamburger Stand",
+      "kind": "establishment",
+      "deck": "7-12",
+      "category": "red",
+      "symbol": "cup",
+      "activation_numbers": [
+        8
+      ],
+      "build_cost": 1,
+      "ability_text_en": "Take 2 coins from the active player. (opponent’s turn)",
+      "effect_spec_draft": {
+        "op": "take_from_active",
+        "amount": 2,
+        "when": "opponent_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/hamburger_stand.jpg",
+      "image_source": "cardlist_7-12.jpg",
+      "source_grid": [
+        0,
+        3
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "shopping_district",
+      "name_en": "Shopping District",
+      "kind": "establishment",
+      "deck": "7-12",
+      "category": "purple",
+      "symbol": "major",
+      "activation_numbers": [
+        8,
+        9
+      ],
+      "build_cost": 3,
+      "ability_text_en": "From each opponent who has more than 10 coins, take half, rounded down. (your turn only)",
+      "effect_spec_draft": {
+        "op": "take_half_if_above",
+        "threshold": 10,
+        "round": "floor",
+        "when": "owner_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/shopping_district.jpg",
+      "image_source": "cardlist_7-12.jpg",
+      "source_grid": [
+        1,
+        0
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "winery",
+      "name_en": "Winery",
+      "kind": "establishment",
+      "deck": "7-12",
+      "category": "green",
+      "symbol": "fruit",
+      "activation_numbers": [
+        9
+      ],
+      "build_cost": 3,
+      "ability_text_en": "Get 3 coins from the bank for each fruit-symbol establishment you own. (your turn only)",
+      "effect_spec_draft": {
+        "op": "bank_income_by_symbol",
+        "symbol": "fruit",
+        "per_copy": 3,
+        "when": "owner_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/winery.jpg",
+      "image_source": "cardlist_7-12.jpg",
+      "source_grid": [
+        1,
+        1
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "family_restaurant",
+      "name_en": "Family Restaurant",
+      "kind": "establishment",
+      "deck": "7-12",
+      "category": "red",
+      "symbol": "cup",
+      "activation_numbers": [
+        9,
+        10
+      ],
+      "build_cost": 2,
+      "ability_text_en": "Take 2 coins from the active player. (opponent’s turn)",
+      "effect_spec_draft": {
+        "op": "take_from_active",
+        "amount": 2,
+        "when": "opponent_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/family_restaurant.jpg",
+      "image_source": "cardlist_7-12.jpg",
+      "source_grid": [
+        1,
+        2
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "apple_orchard",
+      "name_en": "Apple Orchard",
+      "kind": "establishment",
+      "deck": "7-12",
+      "category": "blue",
+      "symbol": "fruit",
+      "activation_numbers": [
+        10
+      ],
+      "build_cost": 1,
+      "ability_text_en": "Get 3 coins from the bank. (anyone’s turn)",
+      "effect_spec_draft": {
+        "op": "bank_income",
+        "amount": 3,
+        "when": "any_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/apple_orchard.jpg",
+      "image_source": "cardlist_7-12.jpg",
+      "source_grid": [
+        1,
+        3
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "food_warehouse",
+      "name_en": "Food Warehouse",
+      "kind": "establishment",
+      "deck": "7-12",
+      "category": "green",
+      "symbol": "cup",
+      "activation_numbers": [
+        10,
+        11
+      ],
+      "build_cost": 2,
+      "ability_text_en": "Get 2 coins from the bank for each cup-symbol establishment you own. (your turn only)",
+      "effect_spec_draft": {
+        "op": "bank_income_by_symbol",
+        "symbol": "cup",
+        "per_copy": 2,
+        "when": "owner_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/food_warehouse.jpg",
+      "image_source": "cardlist_7-12.jpg",
+      "source_grid": [
+        2,
+        0
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "mine",
+      "name_en": "Mine",
+      "kind": "establishment",
+      "deck": "7-12",
+      "category": "blue",
+      "symbol": "gear",
+      "activation_numbers": [
+        11,
+        12
+      ],
+      "build_cost": 4,
+      "ability_text_en": "Get 6 coins from the bank. (anyone’s turn)",
+      "effect_spec_draft": {
+        "op": "bank_income",
+        "amount": 6,
+        "when": "any_turn"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "REQUIRES_VERIFICATION",
+      "image": "assets/establishments/mine.jpg",
+      "image_source": "cardlist_7-12.jpg",
+      "source_grid": [
+        2,
+        1
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    }
+  ],
+  "landmarks": [
+    {
+      "id": "airport",
+      "name_en": "Airport",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        12,
+        16,
+        22
+      ],
+      "effect_timing": "ongoing",
+      "effect_scope": "all",
+      "ability_text_en": "If you don’t build anything on your turn, get 5 coins from the bank. (all players)",
+      "effect_spec_draft": {
+        "trigger": "no_build_end_turn",
+        "op": "bank_income",
+        "amount": 5
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/airport.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        0,
+        0
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "amusement_park",
+      "name_en": "Amusement Park",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        12,
+        16,
+        22
+      ],
+      "effect_timing": "ongoing",
+      "effect_scope": "all",
+      "ability_text_en": "If you roll doubles, take another turn after this one. (all players)",
+      "effect_spec_draft": {
+        "trigger": "rolled_doubles",
+        "op": "grant_extra_turn",
+        "cap_same_turn": 1
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/amusement_park.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        0,
+        1
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "charterhouse",
+      "name_en": "Charterhouse",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        12,
+        16,
+        22
+      ],
+      "effect_timing": "ongoing",
+      "effect_scope": "all",
+      "ability_text_en": "If you roll 2 dice and receive no coins, get 3 coins from the bank. (all players)",
+      "effect_spec_draft": {
+        "trigger": "two_dice_no_coins_received",
+        "op": "bank_income",
+        "amount": 3
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/charterhouse.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        0,
+        2
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "exhibit_hall",
+      "name_en": "Exhibit Hall",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        12,
+        16,
+        22
+      ],
+      "effect_timing": "immediate",
+      "effect_scope": "builder",
+      "ability_text_en": "From each opponent who has more than 10 coins, take half, rounded down. (builder only)",
+      "effect_spec_draft": {
+        "on": "build",
+        "op": "take_half_if_above",
+        "threshold": 10,
+        "round": "floor"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/exhibit_hall.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        0,
+        3
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "farmers_market",
+      "name_en": "Farmers Market",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        10,
+        14,
+        22
+      ],
+      "effect_timing": "ongoing",
+      "effect_scope": "all",
+      "ability_text_en": "Your wheat-symbol establishments earn +1 coin income when activated. (all players)",
+      "effect_spec_draft": {
+        "op": "increase_income",
+        "symbol": "wheat",
+        "amount_per_activation_copy": 1
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/farmers_market.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        0,
+        4
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "forge",
+      "name_en": "Forge",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        12,
+        16,
+        22
+      ],
+      "effect_timing": "ongoing",
+      "effect_scope": "all",
+      "ability_text_en": "Your gear-symbol establishments earn +1 coin income when activated. (all players)",
+      "effect_spec_draft": {
+        "op": "increase_income",
+        "symbol": "gear",
+        "amount_per_activation_copy": 1
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/forge.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        1,
+        0
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "french_restaurant",
+      "name_en": "French Restaurant",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        10,
+        14,
+        22
+      ],
+      "effect_timing": "immediate",
+      "effect_scope": "builder",
+      "ability_text_en": "Take 2 coins from each opponent. (builder only)",
+      "effect_spec_draft": {
+        "on": "build",
+        "op": "take_each_opponent",
+        "amount": 2
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/french_restaurant.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        1,
+        1
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "launch_pad",
+      "name_en": "Launch Pad",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        45,
+        38,
+        25
+      ],
+      "effect_timing": "immediate",
+      "effect_scope": "builder",
+      "ability_text_en": "You win the game! (builder only)",
+      "effect_spec_draft": {
+        "on": "build",
+        "op": "win_immediately"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/launch_pad.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        1,
+        2
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "loan_office",
+      "name_en": "Loan Office",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        10
+      ],
+      "effect_timing": "ongoing",
+      "effect_scope": "builder",
+      "ability_text_en": "You can only build this landmark when you are the only player with no landmarks. Reduce the build cost of all landmarks by 2 coins. (builder only)",
+      "effect_spec_draft": {
+        "op": "discount_landmarks",
+        "discount": 2,
+        "build_requirement": "sole_player_with_zero_landmarks",
+        "special_one_cost_card": true
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/loan_office.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        1,
+        3
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "moving_company",
+      "name_en": "Moving Company",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        10,
+        14,
+        22
+      ],
+      "effect_timing": "ongoing",
+      "effect_scope": "all",
+      "ability_text_en": "If you roll doubles, give 1 of your establishments to the player on your right. (all players)",
+      "effect_spec_draft": {
+        "trigger": "rolled_doubles",
+        "op": "transfer_establishment_to_right",
+        "mandatory": true,
+        "defer_until_activation_end": true,
+        "choice_required": true
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/moving_company.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        1,
+        4
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "museum",
+      "name_en": "Museum",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        12,
+        16,
+        22
+      ],
+      "effect_timing": "immediate",
+      "effect_scope": "builder",
+      "ability_text_en": "Take 3 coins from each opponent for each landmark they own. (builder only)",
+      "effect_spec_draft": {
+        "on": "build",
+        "op": "take_each_opponent_per_landmark",
+        "per_copy": 3
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/museum.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        2,
+        0
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "observatory",
+      "name_en": "Observatory",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        10,
+        14,
+        22
+      ],
+      "effect_timing": "ongoing",
+      "effect_scope": "all",
+      "ability_text_en": "Reduce the build cost of the Launch Pad by 5 coins. (all players)",
+      "effect_spec_draft": {
+        "op": "discount_named_landmark",
+        "landmark": "launch_pad",
+        "discount": 5
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/observatory.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        2,
+        1
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "park",
+      "name_en": "Park",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        12,
+        16,
+        22
+      ],
+      "effect_timing": "immediate",
+      "effect_scope": "builder",
+      "ability_text_en": "Redistribute all players’ coins as evenly as possible, making up any difference with coins from the bank. (builder only)",
+      "effect_spec_draft": {
+        "on": "build",
+        "op": "redistribute_coins_evenly",
+        "implementation_status": "RULE_INTERPRETATION_REVIEW_REQUIRED"
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/park.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        2,
+        2
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "publisher",
+      "name_en": "Publisher",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        10,
+        14,
+        22
+      ],
+      "effect_timing": "immediate",
+      "effect_scope": "builder",
+      "ability_text_en": "Take 1 coin from each opponent for each shop-symbol establishment they own. (builder only)",
+      "effect_spec_draft": {
+        "on": "build",
+        "op": "take_each_opponent_by_symbol",
+        "symbol": "shop",
+        "per_copy": 1
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/publisher.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        2,
+        3
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "radio_tower",
+      "name_en": "Radio Tower",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        12,
+        16,
+        22
+      ],
+      "effect_timing": "immediate",
+      "effect_scope": "builder",
+      "ability_text_en": "Take another turn after this one. (builder only)",
+      "effect_spec_draft": {
+        "on": "build",
+        "op": "grant_extra_turn",
+        "cap_same_turn": 1
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/radio_tower.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        2,
+        4
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "shopping_mall",
+      "name_en": "Shopping Mall",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        10,
+        14,
+        22
+      ],
+      "effect_timing": "ongoing",
+      "effect_scope": "all",
+      "ability_text_en": "Your shop-symbol establishments earn +1 coin income when activated. (all players)",
+      "effect_spec_draft": {
+        "op": "increase_income",
+        "symbol": "shop",
+        "amount_per_activation_copy": 1
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/shopping_mall.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        3,
+        0
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "soda_bottling_plant",
+      "name_en": "Soda Bottling Plant",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        12,
+        16,
+        22
+      ],
+      "effect_timing": "ongoing",
+      "effect_scope": "all",
+      "ability_text_en": "Your cup-symbol establishments earn +1 coin income when activated. (all players)",
+      "effect_spec_draft": {
+        "op": "increase_income",
+        "symbol": "cup",
+        "amount_per_activation_copy": 1
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/soda_bottling_plant.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        3,
+        1
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "tech_startup",
+      "name_en": "Tech Startup",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        10,
+        14,
+        22
+      ],
+      "effect_timing": "ongoing",
+      "effect_scope": "all",
+      "ability_text_en": "If you roll 12, get 8 coins from the bank. (all players)",
+      "effect_spec_draft": {
+        "trigger": "roll_total_12",
+        "op": "bank_income",
+        "amount": 8
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/tech_startup.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        3,
+        2
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "temple",
+      "name_en": "Temple",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        12,
+        16,
+        22
+      ],
+      "effect_timing": "ongoing",
+      "effect_scope": "all",
+      "ability_text_en": "If you roll doubles, take 2 coins from each opponent. (all players)",
+      "effect_spec_draft": {
+        "trigger": "rolled_doubles",
+        "op": "take_each_opponent",
+        "amount": 2
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/temple.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        3,
+        3
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "tv_station",
+      "name_en": "TV Station",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        12,
+        16,
+        22
+      ],
+      "effect_timing": "immediate",
+      "effect_scope": "builder",
+      "ability_text_en": "Take 1 coin from each opponent for each cup-symbol establishment they own. (builder only)",
+      "effect_spec_draft": {
+        "on": "build",
+        "op": "take_each_opponent_by_symbol",
+        "symbol": "cup",
+        "per_copy": 1
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/tv_station.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        3,
+        4
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "private_club",
+      "name_en": "Private Club",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        12,
+        16,
+        22
+      ],
+      "effect_timing": "immediate",
+      "effect_scope": "builder",
+      "ability_text_en": "Take 5 coins from each opponent who has 2 landmarks. (builder only)",
+      "effect_spec_draft": {
+        "on": "build",
+        "op": "take_each_opponent_if_landmarks",
+        "exact_landmarks": 2,
+        "amount": 5
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/private_club.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        4,
+        0
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "city_hall",
+      "name_en": "City Hall",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        10,
+        14,
+        22
+      ],
+      "effect_timing": "ongoing",
+      "effect_scope": "all",
+      "ability_text_en": "If you roll 1 die and receive no coins, get 2 coins from the bank. (all players)",
+      "effect_spec_draft": {
+        "trigger": "one_die_no_coins_received",
+        "op": "bank_income",
+        "amount": 2
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/city_hall.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        4,
+        1
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    },
+    {
+      "id": "renovation_company",
+      "name_en": "Renovation Company",
+      "kind": "landmark",
+      "deck": "landmarks",
+      "category": "landmark",
+      "cost_by_position": [
+        10,
+        14,
+        22
+      ],
+      "effect_timing": "ongoing",
+      "effect_scope": "all",
+      "ability_text_en": "If you roll a 6, get 1 coin from the bank for each cup-symbol establishment you own. (all players)",
+      "effect_spec_draft": {
+        "trigger": "roll_total_6",
+        "op": "bank_income_by_symbol",
+        "symbol": "cup",
+        "per_copy": 1
+      },
+      "quantity_in_deck": null,
+      "quantity_status": "POOL_AND_COPIES_REQUIRES_VERIFICATION",
+      "pool_status": "UNVERIFIED_RULEBOOK_20_VS_IMAGE_23",
+      "image": "assets/landmarks/renovation_company.jpg",
+      "image_source": "card_lankmark.jpg",
+      "source_grid": [
+        4,
+        2
+      ],
+      "source_basis": "uploaded card image",
+      "data_status": "TRANSCRIBED_REVIEW_EFFECT_SPEC"
+    }
+  ]
+}
