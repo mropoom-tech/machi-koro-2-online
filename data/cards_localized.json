@@ -1,0 +1,346 @@
+[
+  {
+    "id": "sushi_bar",
+    "type": "establishment",
+    "name_en": "Sushi Bar",
+    "name_th": "ซูชิบาร์",
+    "effect_en": "Take 3 coins from the active player. (opponent’s turn)",
+    "effect_th": "รับ 3 เหรียญจากผู้เล่นที่กำลังเล่นอยู่ (เฉพาะเทิร์นของผู้เล่นอื่น)"
+  },
+  {
+    "id": "wheat_field",
+    "type": "establishment",
+    "name_en": "Wheat Field",
+    "name_th": "ไร่ข้าวสาลี",
+    "effect_en": "Get 1 coin from the bank. (anyone’s turn)",
+    "effect_th": "รับ 1 เหรียญจากธนาคาร (ทุกเทิร์น)"
+  },
+  {
+    "id": "vineyard",
+    "type": "establishment",
+    "name_en": "Vineyard",
+    "name_th": "ไร่องุ่น",
+    "effect_en": "Get 2 coins from the bank. (anyone’s turn)",
+    "effect_th": "รับ 2 เหรียญจากธนาคาร (ทุกเทิร์น)"
+  },
+  {
+    "id": "bakery",
+    "type": "establishment",
+    "name_en": "Bakery",
+    "name_th": "ร้านเบเกอรี",
+    "effect_en": "Get 2 coins from the bank. (your turn only)",
+    "effect_th": "รับ 2 เหรียญจากธนาคาร (เฉพาะเทิร์นของคุณ)"
+  },
+  {
+    "id": "cafe",
+    "type": "establishment",
+    "name_en": "Café",
+    "name_th": "คาเฟ่",
+    "effect_en": "Take 2 coins from the active player. (opponent’s turn)",
+    "effect_th": "รับ 2 เหรียญจากผู้เล่นที่กำลังเล่นอยู่ (เฉพาะเทิร์นของผู้เล่นอื่น)"
+  },
+  {
+    "id": "convenience_store",
+    "type": "establishment",
+    "name_en": "Convenience Store",
+    "name_th": "ร้านสะดวกซื้อ",
+    "effect_en": "Get 3 coins from the bank. (your turn only)",
+    "effect_th": "รับ 3 เหรียญจากธนาคาร (เฉพาะเทิร์นของคุณ)"
+  },
+  {
+    "id": "flower_garden",
+    "type": "establishment",
+    "name_en": "Flower Garden",
+    "name_th": "สวนดอกไม้",
+    "effect_en": "Get 2 coins from the bank. (anyone’s turn)",
+    "effect_th": "รับ 2 เหรียญจากธนาคาร (ทุกเทิร์น)"
+  },
+  {
+    "id": "forest",
+    "type": "establishment",
+    "name_en": "Forest",
+    "name_th": "ป่าไม้",
+    "effect_en": "Get 2 coins from the bank. (anyone’s turn)",
+    "effect_th": "รับ 2 เหรียญจากธนาคาร (ทุกเทิร์น)"
+  },
+  {
+    "id": "business_center",
+    "type": "establishment",
+    "name_en": "Business Center",
+    "name_th": "ศูนย์ธุรกิจ",
+    "effect_en": "Exchange 1 of your establishments for 1 an opponent owns. (your turn only)",
+    "effect_th": "คุณอาจแลกกิจการของคุณ 1 ใบกับกิจการของผู้เล่นอื่น 1 ใบ (เฉพาะเทิร์นของคุณ)"
+  },
+  {
+    "id": "flower_shop",
+    "type": "establishment",
+    "name_en": "Flower Shop",
+    "name_th": "ร้านดอกไม้",
+    "effect_en": "Get 3 coins from the bank for each flower-symbol establishment you own. (your turn only)",
+    "effect_th": "รับ 3 เหรียญจากธนาคารต่อกิจการสัญลักษณ์ดอกไม้แต่ละใบที่คุณมี (เฉพาะเทิร์นของคุณ)"
+  },
+  {
+    "id": "corn_field",
+    "type": "establishment",
+    "name_en": "Corn Field",
+    "name_th": "ไร่ข้าวโพด",
+    "effect_en": "Get 3 coins from the bank. (anyone’s turn)",
+    "effect_th": "รับ 3 เหรียญจากธนาคาร (ทุกเทิร์น)"
+  },
+  {
+    "id": "stadium",
+    "type": "establishment",
+    "name_en": "Stadium",
+    "name_th": "สนามกีฬา",
+    "effect_en": "Take 3 coins from each opponent. (your turn only)",
+    "effect_th": "รับ 3 เหรียญจากผู้เล่นอื่นแต่ละคน (เฉพาะเทิร์นของคุณ)"
+  },
+  {
+    "id": "furniture_factory",
+    "type": "establishment",
+    "name_en": "Furniture Factory",
+    "name_th": "โรงงานเฟอร์นิเจอร์",
+    "effect_en": "Get 4 coins from the bank for each gear-symbol establishment you own. (your turn only)",
+    "effect_th": "รับ 4 เหรียญจากธนาคารต่อกิจการสัญลักษณ์เฟืองแต่ละใบที่คุณมี (เฉพาะเทิร์นของคุณ)"
+  },
+  {
+    "id": "hamburger_stand",
+    "type": "establishment",
+    "name_en": "Hamburger Stand",
+    "name_th": "ร้านแฮมเบอร์เกอร์",
+    "effect_en": "Take 2 coins from the active player. (opponent’s turn)",
+    "effect_th": "รับ 2 เหรียญจากผู้เล่นที่กำลังเล่นอยู่ (เฉพาะเทิร์นของผู้เล่นอื่น)"
+  },
+  {
+    "id": "shopping_district",
+    "type": "establishment",
+    "name_en": "Shopping District",
+    "name_th": "ย่านการค้า",
+    "effect_en": "From each opponent who has more than 10 coins, take half, rounded down. (your turn only)",
+    "effect_th": "รับเหรียญจากผู้เล่นอื่นแต่ละคนที่มีมากกว่า 10 เหรียญ เป็นจำนวนครึ่งหนึ่งของเหรียญที่ผู้เล่นคนนั้นมี โดยปัดเศษลง (เฉพาะเทิร์นของคุณ)"
+  },
+  {
+    "id": "winery",
+    "type": "establishment",
+    "name_en": "Winery",
+    "name_th": "โรงบ่มไวน์",
+    "effect_en": "Get 3 coins from the bank for each fruit-symbol establishment you own. (your turn only)",
+    "effect_th": "รับ 3 เหรียญจากธนาคารต่อกิจการสัญลักษณ์ผลไม้แต่ละใบที่คุณมี (เฉพาะเทิร์นของคุณ)"
+  },
+  {
+    "id": "family_restaurant",
+    "type": "establishment",
+    "name_en": "Family Restaurant",
+    "name_th": "ร้านอาหารครอบครัว",
+    "effect_en": "Take 2 coins from the active player. (opponent’s turn)",
+    "effect_th": "รับ 2 เหรียญจากผู้เล่นที่กำลังเล่นอยู่ (เฉพาะเทิร์นของผู้เล่นอื่น)"
+  },
+  {
+    "id": "apple_orchard",
+    "type": "establishment",
+    "name_en": "Apple Orchard",
+    "name_th": "สวนแอปเปิล",
+    "effect_en": "Get 3 coins from the bank. (anyone’s turn)",
+    "effect_th": "รับ 3 เหรียญจากธนาคาร (ทุกเทิร์น)"
+  },
+  {
+    "id": "food_warehouse",
+    "type": "establishment",
+    "name_en": "Food Warehouse",
+    "name_th": "คลังอาหาร",
+    "effect_en": "Get 2 coins from the bank for each cup-symbol establishment you own. (your turn only)",
+    "effect_th": "รับ 2 เหรียญจากธนาคารต่อกิจการสัญลักษณ์ถ้วยแต่ละใบที่คุณมี (เฉพาะเทิร์นของคุณ)"
+  },
+  {
+    "id": "mine",
+    "type": "establishment",
+    "name_en": "Mine",
+    "name_th": "เหมืองแร่",
+    "effect_en": "Get 6 coins from the bank. (anyone’s turn)",
+    "effect_th": "รับ 6 เหรียญจากธนาคาร (ทุกเทิร์น)"
+  },
+  {
+    "id": "airport",
+    "type": "landmark",
+    "name_en": "Airport",
+    "name_th": "สนามบิน",
+    "effect_en": "If you don’t build anything on your turn, get 5 coins from the bank. (all players)",
+    "effect_th": "หากคุณไม่ได้สร้างการ์ดใดเลยในเทิร์นของคุณ รับ 5 เหรียญจากธนาคาร (มีผลกับผู้เล่นทุกคน)"
+  },
+  {
+    "id": "amusement_park",
+    "type": "landmark",
+    "name_en": "Amusement Park",
+    "name_th": "สวนสนุก",
+    "effect_en": "If you roll doubles, take another turn after this one. (all players)",
+    "effect_th": "หากคุณทอยลูกเต๋า 2 ลูกได้แต้มเหมือนกัน เล่นเพิ่มอีก 1 เทิร์นหลังจบเทิร์นนี้ (มีผลกับผู้เล่นทุกคน)"
+  },
+  {
+    "id": "charterhouse",
+    "type": "landmark",
+    "name_en": "Charterhouse",
+    "name_th": "ชาร์เตอร์เฮาส์",
+    "effect_en": "If you roll 2 dice and receive no coins, get 3 coins from the bank. (all players)",
+    "effect_th": "หากคุณทอยลูกเต๋า 2 ลูกและไม่ได้รับเหรียญเลย รับ 3 เหรียญจากธนาคาร (มีผลกับผู้เล่นทุกคน)"
+  },
+  {
+    "id": "exhibit_hall",
+    "type": "landmark",
+    "name_en": "Exhibit Hall",
+    "name_th": "หอจัดแสดง",
+    "effect_en": "From each opponent who has more than 10 coins, take half, rounded down. (builder only)",
+    "effect_th": "รับเหรียญจากผู้เล่นอื่นแต่ละคนที่มีมากกว่า 10 เหรียญ เป็นจำนวนครึ่งหนึ่งของเหรียญที่ผู้เล่นคนนั้นมี โดยปัดเศษลง (เฉพาะผู้สร้าง)"
+  },
+  {
+    "id": "farmers_market",
+    "type": "landmark",
+    "name_en": "Farmers Market",
+    "name_th": "ตลาดเกษตรกร",
+    "effect_en": "Your wheat-symbol establishments earn +1 coin income when activated. (all players)",
+    "effect_th": "กิจการสัญลักษณ์รวงข้าวของผู้เล่นทุกคนได้รับรายได้เพิ่ม 1 เหรียญต่อใบเมื่อทำงาน (มีผลกับผู้เล่นทุกคน)"
+  },
+  {
+    "id": "forge",
+    "type": "landmark",
+    "name_en": "Forge",
+    "name_th": "โรงตีเหล็ก",
+    "effect_en": "Your gear-symbol establishments earn +1 coin income when activated. (all players)",
+    "effect_th": "กิจการสัญลักษณ์เฟืองของผู้เล่นทุกคนได้รับรายได้เพิ่ม 1 เหรียญต่อใบเมื่อทำงาน (มีผลกับผู้เล่นทุกคน)"
+  },
+  {
+    "id": "french_restaurant",
+    "type": "landmark",
+    "name_en": "French Restaurant",
+    "name_th": "ภัตตาคารฝรั่งเศส",
+    "effect_en": "Take 2 coins from each opponent. (builder only)",
+    "effect_th": "รับ 2 เหรียญจากผู้เล่นอื่นแต่ละคน (เฉพาะผู้สร้าง)"
+  },
+  {
+    "id": "launch_pad",
+    "type": "landmark",
+    "name_en": "Launch Pad",
+    "name_th": "ฐานปล่อยจรวด",
+    "effect_en": "You win the game! (builder only)",
+    "effect_th": "คุณชนะเกมทันที! (เฉพาะผู้สร้าง)"
+  },
+  {
+    "id": "loan_office",
+    "type": "landmark",
+    "name_en": "Loan Office",
+    "name_th": "สำนักงานเงินกู้",
+    "effect_en": "You can only build this landmark when you are the only player with no landmarks. Reduce the build cost of all landmarks by 2 coins. (builder only)",
+    "effect_th": "คุณสร้างแลนด์มาร์กนี้ได้ก็ต่อเมื่อคุณเป็นผู้เล่นเพียงคนเดียวที่ยังไม่มีแลนด์มาร์ก ลดค่าก่อสร้างแลนด์มาร์กทุกใบของคุณลง 2 เหรียญ (เฉพาะผู้สร้าง)"
+  },
+  {
+    "id": "moving_company",
+    "type": "landmark",
+    "name_en": "Moving Company",
+    "name_th": "บริษัทขนย้าย",
+    "effect_en": "If you roll doubles, give 1 of your establishments to the player on your right. (all players)",
+    "effect_th": "หากคุณทอยลูกเต๋า 2 ลูกได้แต้มเหมือนกัน มอบกิจการของคุณ 1 ใบให้ผู้เล่นที่นั่งถัดไปทางขวา (มีผลกับผู้เล่นทุกคน)"
+  },
+  {
+    "id": "museum",
+    "type": "landmark",
+    "name_en": "Museum",
+    "name_th": "พิพิธภัณฑ์",
+    "effect_en": "Take 3 coins from each opponent for each landmark they own. (builder only)",
+    "effect_th": "รับ 3 เหรียญจากผู้เล่นอื่นแต่ละคนต่อแลนด์มาร์กแต่ละแห่งที่ผู้เล่นคนนั้นมี (เฉพาะผู้สร้าง)"
+  },
+  {
+    "id": "observatory",
+    "type": "landmark",
+    "name_en": "Observatory",
+    "name_th": "หอดูดาว",
+    "effect_en": "Reduce the build cost of the Launch Pad by 5 coins. (all players)",
+    "effect_th": "ลดค่าก่อสร้างฐานปล่อยจรวดลง 5 เหรียญ (มีผลกับผู้เล่นทุกคน)"
+  },
+  {
+    "id": "park",
+    "type": "landmark",
+    "name_en": "Park",
+    "name_th": "สวนสาธารณะ",
+    "effect_en": "Redistribute all players’ coins as evenly as possible, making up any difference with coins from the bank. (builder only)",
+    "effect_th": "นำเหรียญของผู้เล่นทุกคนมาแจกจ่ายใหม่ให้เท่ากันมากที่สุด โดยนำเหรียญจากธนาคารมาเติมส่วนต่างตามจำเป็น (เฉพาะผู้สร้าง)"
+  },
+  {
+    "id": "publisher",
+    "type": "landmark",
+    "name_en": "Publisher",
+    "name_th": "สำนักพิมพ์",
+    "effect_en": "Take 1 coin from each opponent for each shop-symbol establishment they own. (builder only)",
+    "effect_th": "รับ 1 เหรียญจากผู้เล่นอื่นแต่ละคนต่อกิจการสัญลักษณ์ร้านค้าที่ผู้เล่นคนนั้นมี (เฉพาะผู้สร้าง)"
+  },
+  {
+    "id": "radio_tower",
+    "type": "landmark",
+    "name_en": "Radio Tower",
+    "name_th": "หอส่งสัญญาณวิทยุ",
+    "effect_en": "Take another turn after this one. (builder only)",
+    "effect_th": "เล่นเพิ่มอีก 1 เทิร์นหลังจบเทิร์นนี้ (เฉพาะผู้สร้าง)"
+  },
+  {
+    "id": "shopping_mall",
+    "type": "landmark",
+    "name_en": "Shopping Mall",
+    "name_th": "ศูนย์การค้า",
+    "effect_en": "Your shop-symbol establishments earn +1 coin income when activated. (all players)",
+    "effect_th": "กิจการสัญลักษณ์ร้านค้าของผู้เล่นทุกคนได้รับรายได้เพิ่ม 1 เหรียญต่อใบเมื่อทำงาน (มีผลกับผู้เล่นทุกคน)"
+  },
+  {
+    "id": "soda_bottling_plant",
+    "type": "landmark",
+    "name_en": "Soda Bottling Plant",
+    "name_th": "โรงงานบรรจุน้ำอัดลม",
+    "effect_en": "Your cup-symbol establishments earn +1 coin income when activated. (all players)",
+    "effect_th": "กิจการสัญลักษณ์ถ้วยของผู้เล่นทุกคนได้รับรายได้เพิ่ม 1 เหรียญต่อใบเมื่อทำงาน (มีผลกับผู้เล่นทุกคน)"
+  },
+  {
+    "id": "tech_startup",
+    "type": "landmark",
+    "name_en": "Tech Startup",
+    "name_th": "สตาร์ตอัปเทคโนโลยี",
+    "effect_en": "If you roll 12, get 8 coins from the bank. (all players)",
+    "effect_th": "หากคุณทอยได้แต้มรวม 12 รับ 8 เหรียญจากธนาคาร (มีผลกับผู้เล่นทุกคน)"
+  },
+  {
+    "id": "temple",
+    "type": "landmark",
+    "name_en": "Temple",
+    "name_th": "วัด",
+    "effect_en": "If you roll doubles, take 2 coins from each opponent. (all players)",
+    "effect_th": "หากคุณทอยลูกเต๋า 2 ลูกได้แต้มเหมือนกัน รับ 2 เหรียญจากผู้เล่นอื่นแต่ละคน (มีผลกับผู้เล่นทุกคน)"
+  },
+  {
+    "id": "tv_station",
+    "type": "landmark",
+    "name_en": "TV Station",
+    "name_th": "สถานีโทรทัศน์",
+    "effect_en": "Take 1 coin from each opponent for each cup-symbol establishment they own. (builder only)",
+    "effect_th": "รับ 1 เหรียญจากผู้เล่นอื่นแต่ละคนต่อกิจการสัญลักษณ์ถ้วยที่ผู้เล่นคนนั้นมี (เฉพาะผู้สร้าง)"
+  },
+  {
+    "id": "private_club",
+    "type": "landmark",
+    "name_en": "Private Club",
+    "name_th": "สโมสรส่วนตัว",
+    "effect_en": "Take 5 coins from each opponent who has 2 landmarks. (builder only)",
+    "effect_th": "รับ 5 เหรียญจากผู้เล่นอื่นแต่ละคนที่มีแลนด์มาร์ก 2 แห่งพอดี (เฉพาะผู้สร้าง)"
+  },
+  {
+    "id": "city_hall",
+    "type": "landmark",
+    "name_en": "City Hall",
+    "name_th": "ศาลาว่าการเมือง",
+    "effect_en": "If you roll 1 die and receive no coins, get 2 coins from the bank. (all players)",
+    "effect_th": "หากคุณทอยลูกเต๋า 1 ลูกและไม่ได้รับเหรียญเลย รับ 2 เหรียญจากธนาคาร (มีผลกับผู้เล่นทุกคน)"
+  },
+  {
+    "id": "renovation_company",
+    "type": "landmark",
+    "name_en": "Renovation Company",
+    "name_th": "บริษัทปรับปรุงอาคาร",
+    "effect_en": "If you roll a 6, get 1 coin from the bank for each cup-symbol establishment you own. (all players)",
+    "effect_th": "หากคุณทอยได้แต้มรวม 6 รับ 1 เหรียญจากธนาคารต่อกิจการสัญลักษณ์ถ้วยแต่ละใบที่คุณมี (มีผลกับผู้เล่นทุกคน)"
+  }
+]

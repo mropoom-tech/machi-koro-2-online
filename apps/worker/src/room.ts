@@ -1,0 +1,452 @@
+import { DurableObject } from 'cloudflare:workers';
+import {
+  applyAction, createGame, DEMO_DECK, forceSkipTurn, removePlayer, MAX_MISSED_TURNS, MAX_PLAYERS, MIN_PLAYERS, parseClientMessage, sanitizeName, toPublic, verifiedDeck,
+  type DeckManifest, type GameState, type RoomView, type ServerMessage,
+} from '@mk2/game-engine';
+import type { Env } from './index';
+
+interface StoredPlayer { id: string; name: string; tokenHash: string }
+interface Meta {
+  code: string; hostId: string; status: RoomView['status']; version: number; createdAt: number;
+  expiresAt?: number;
+  /** set while the host has no open socket; used for automatic host handover */
+  hostOfflineSince?: number | null;
+  /** playerId -> time their last socket closed (absent while connected) */
+  offlineSince?: Record<string, number>;
+  turnKey?: string;
+  /** playerId -> consecutive turns skipped */
+  skipStreak?: Record<string, number>;
+  turnStartedAt?: number;
+}
+interface Attachment { playerId: string | null }
+
+const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
+const PROCESSED_LIMIT = 200;
+const HOST_GRACE_MS = 30 * 1000;
+const AUTO_SKIP_MS = 45 * 1000;
+
+function randomHex(bytes: number): string {
+  const a = crypto.getRandomValues(new Uint8Array(bytes));
+  return [...a].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+async function sha256(s: string): Promise<string> {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+
+/** One Durable Object per room. All critical state is persisted to SQLite-backed storage before broadcast. */
+export class GameRoom extends DurableObject<Env> {
+  private meta: Meta | null = null;
+  private players: StoredPlayer[] = [];
+  private game: GameState | null = null;
+  private processed: string[] = [];
+  // in-memory only; resets when the object hibernates, which is acceptable for a soft rate limit
+  private closing: WebSocket | null = null;
+  private rate = new Map<WebSocket, { tokens: number; at: number }>();
+
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    ctx.blockConcurrencyWhile(async () => {
+      const m = await ctx.storage.get<any>(['meta', 'players', 'game', 'processed']);
+      this.meta = (m.get('meta') as Meta) ?? null;
+      this.players = (m.get('players') as StoredPlayer[]) ?? [];
+      this.game = (m.get('game') as GameState) ?? null;
+      this.processed = (m.get('processed') as string[]) ?? [];
+    });
+    ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('{"t":"ping"}', '{"t":"pong"}'));
+  }
+
+  private async persist() {
+    if (this.meta) {
+      this.meta.expiresAt = Date.now() + ROOM_TTL_MS;
+      if (this.game) {
+        // Each new turn gets a fresh grace period before an offline player is skipped.
+        const key = `${this.game.turn}:${this.game.activeIndex}:${this.game.setupRound}`;
+        if (key !== this.meta.turnKey) { this.meta.turnKey = key; this.meta.turnStartedAt = Date.now(); }
+      }
+    }
+    await this.ctx.storage.put({ meta: this.meta, players: this.players, game: this.game, processed: this.processed });
+    await this.scheduleAlarm();
+  }
+
+  /** One alarm serves two jobs: room expiry and the host-offline handover check. */
+  private async scheduleAlarm() {
+    if (!this.meta) return;
+    const times = [this.meta.expiresAt ?? Date.now() + ROOM_TTL_MS];
+    if (this.meta.hostOfflineSince) times.push(this.meta.hostOfflineSince + HOST_GRACE_MS);
+    const skipAt = this.autoSkipAt();
+    if (skipAt) times.push(skipAt);
+    await this.ctx.storage.setAlarm(Math.min(...times));
+  }
+
+  private activeOfflineSince(): number | null {
+    if (!this.meta || !this.game || this.meta.status !== 'playing') return null;
+    const id = this.game.players[this.game.activeIndex]?.id;
+    return (id && this.meta.offlineSince?.[id]) || null;
+  }
+
+  private autoSkipAt(): number | null {
+    const since = this.activeOfflineSince();
+    if (!since) return null;
+    return Math.max(since, this.meta!.turnStartedAt ?? 0) + AUTO_SKIP_MS;
+  }
+
+  private async skipActive() {
+    const pid = this.game!.players[this.game!.activeIndex].id;
+    this.game = forceSkipTurn(this.game!);
+    const m = this.meta!;
+    m.skipStreak = { ...m.skipStreak, [pid]: (m.skipStreak?.[pid] ?? 0) + 1 };
+    m.version++;
+    if (m.skipStreak[pid] >= MAX_MISSED_TURNS) {
+      return this.removeFromGame(pid, `ถูกข้าม ${MAX_MISSED_TURNS} เทิร์นติดกัน`);
+    }
+    await this.persist();
+    this.broadcastRoom();
+  }
+
+  /** Removes a player from the running game and from the room; their token stops working. */
+  private async removeFromGame(pid: string, reason: string, forfeit = false) {
+    const m = this.meta!;
+    const name = this.players.find((p) => p.id === pid)?.name ?? '';
+    this.game = removePlayer(this.game!, pid, forfeit ? 'forfeit' : 'removed');
+    this.players = this.players.filter((p) => p.id !== pid);
+    if (m.offlineSince) delete m.offlineSince[pid];
+    if (m.skipStreak) delete m.skipStreak[pid];
+    for (const s of this.ctx.getWebSockets()) {
+      if ((s.deserializeAttachment() as Attachment | null)?.playerId === pid) {
+        s.serializeAttachment({ playerId: null } satisfies Attachment);
+        s.close(forfeit ? 4005 : 4004, forfeit ? 'forfeit' : 'removed');
+      }
+    }
+    if (this.game.phase === 'ended') m.status = 'ended';
+    m.version++;
+    this.notice(forfeit ? `🏳️ ${name} ยอมแพ้และออกจากเกม` : `🚪 ${name} ถูกนำออกจากเกม (${reason})`);
+    if (m.hostId === pid && this.players.length > 0) {
+      const online = this.connectedIds();
+      this.setHost((this.players.find((p) => online.has(p.id)) ?? this.players[0]).id, 'left');
+    }
+    await this.persist();
+    this.broadcastRoom();
+  }
+
+  private async wipe() {
+    for (const ws of this.ctx.getWebSockets()) ws.close(4000, 'room expired');
+    await this.ctx.storage.deleteAll();
+    this.meta = null; this.players = []; this.game = null; this.processed = [];
+  }
+
+  async alarm() {
+    if (!this.meta) return;
+    const now = Date.now();
+    if (now >= (this.meta.expiresAt ?? 0)) return this.wipe(); // expired from inactivity
+    const skipAt = this.autoSkipAt();
+    if (skipAt && now >= skipAt) {
+      await this.skipActive();
+      return;
+    }
+    const since = this.meta.hostOfflineSince;
+    if (since && now - since >= HOST_GRACE_MS) {
+      const online = this.connectedIds();
+      if (online.has(this.meta.hostId)) this.meta.hostOfflineSince = null;
+      else {
+        const next = this.players.find((p) => online.has(p.id));
+        if (next) this.setHost(next.id, 'auto');
+        else this.meta.hostOfflineSince = null; // nobody online; re-check when someone disconnects again
+      }
+      await this.persist();
+      this.broadcastRoom();
+      return;
+    }
+    await this.scheduleAlarm();
+  }
+
+  private setHost(playerId: string, reason: 'auto' | 'manual' | 'left') {
+    const m = this.meta!;
+    if (m.hostId === playerId) return;
+    m.hostId = playerId;
+    m.hostOfflineSince = null;
+    m.version++;
+    const name = this.players.find((p) => p.id === playerId)?.name ?? '';
+    const why = reason === 'auto' ? ' (หัวห้องเดิมหลุดการเชื่อมต่อ)' : reason === 'left' ? ' (หัวห้องเดิมออกจากห้อง)' : '';
+    this.notice(`👑 ${name} เป็นหัวห้องคนใหม่${why}`);
+  }
+
+  private notice(text: string) {
+    const data = JSON.stringify({ t: 'notice', text } satisfies ServerMessage);
+    for (const ws of this.ctx.getWebSockets()) {
+      const a = ws.deserializeAttachment() as Attachment | null;
+      if (a?.playerId) try { ws.send(data); } catch { /* ignore */ }
+    }
+  }
+
+  private deck(): DeckManifest {
+    return verifiedDeck() ?? DEMO_DECK;
+  }
+
+  private async addPlayer(name: string): Promise<{ token: string; playerId: string }> {
+    const token = randomHex(16); // 128-bit bearer secret; only its hash is stored
+    const playerId = randomHex(6);
+    this.players.push({ id: playerId, name, tokenHash: await sha256(token) });
+    return { token, playerId };
+  }
+
+  async fetch(req: Request): Promise<Response> {
+    const url = new URL(req.url);
+    const code = url.searchParams.get('code') ?? '';
+
+    if (url.pathname === '/create' && req.method === 'POST') {
+      if (this.meta) return json({ error: 'exists' }, 409);
+      const name = sanitizeName(((await req.json()) as any)?.name);
+      if (!name) return json({ error: 'กรุณาใส่ชื่อเล่น' }, 400);
+      const { token, playerId } = await this.addPlayer(name);
+      this.meta = { code, hostId: playerId, status: 'lobby', version: 1, createdAt: Date.now() };
+      await this.persist();
+      return json({ code, token, playerId });
+    }
+
+    if (!this.meta) return json({ error: 'ไม่พบห้องนี้' }, 404);
+
+    if (url.pathname === '/join' && req.method === 'POST') {
+      const name = sanitizeName(((await req.json()) as any)?.name);
+      if (!name) return json({ error: 'กรุณาใส่ชื่อเล่น' }, 400);
+      if (this.meta.status !== 'lobby') return json({ error: 'เกมเริ่มไปแล้ว เข้าร่วมใหม่ไม่ได้' }, 409);
+      if (this.players.length >= MAX_PLAYERS) return json({ error: `ห้องเต็มแล้ว (สูงสุด ${MAX_PLAYERS} คน)` }, 409);
+      if (this.players.some((p) => p.name === name)) return json({ error: 'มีผู้เล่นใช้ชื่อนี้แล้ว' }, 409);
+      const res = await this.addPlayer(name);
+      this.meta.version++;
+      await this.persist();
+      this.broadcastRoom();
+      return json(res);
+    }
+
+    if (url.pathname === '/ws') {
+      if (req.headers.get('Upgrade') !== 'websocket') return new Response('expected websocket', { status: 426 });
+      const pair = new WebSocketPair();
+      this.ctx.acceptWebSocket(pair[1]);
+      pair[1].serializeAttachment({ playerId: null } satisfies Attachment);
+      return new Response(null, { status: 101, webSocket: pair[0] });
+    }
+
+    return json({ error: 'not found' }, 404);
+  }
+
+  // ------------------------------------------------------------ websocket
+
+  private send(ws: WebSocket, msg: ServerMessage) {
+    try { ws.send(JSON.stringify(msg)); } catch { /* socket already gone */ }
+  }
+
+  private connectedIds(): Set<string> {
+    const s = new Set<string>();
+    for (const ws of this.ctx.getWebSockets()) {
+      if (ws === this.closing || ws.readyState > 1) continue;
+      const a = ws.deserializeAttachment() as Attachment | null;
+      if (a?.playerId) s.add(a.playerId);
+    }
+    return s;
+  }
+
+  private view(): RoomView {
+    const m = this.meta!;
+    const online = this.connectedIds();
+    return {
+      code: m.code,
+      status: m.status,
+      hostId: m.hostId,
+      version: m.version,
+      deckMode: this.game?.deckMode ?? this.deck().mode,
+      autoSkipAt: this.autoSkipAt(),
+      serverNow: Date.now(),
+      players: this.players.map((p) => ({
+        id: p.id, name: p.name, connected: online.has(p.id), isHost: p.id === m.hostId,
+        missedTurns: m.skipStreak?.[p.id] ?? 0,
+      })),
+      game: this.game ? toPublic(this.game) : null,
+    };
+  }
+
+  private broadcastRoom() {
+    const msg: ServerMessage = { t: 'room', room: this.view() };
+    const data = JSON.stringify(msg);
+    for (const ws of this.ctx.getWebSockets()) {
+      const a = ws.deserializeAttachment() as Attachment | null;
+      if (a?.playerId) try { ws.send(data); } catch { /* ignore */ }
+    }
+  }
+
+  private allow(ws: WebSocket): boolean {
+    const now = Date.now();
+    const b = this.rate.get(ws) ?? { tokens: 20, at: now };
+    b.tokens = Math.min(20, b.tokens + ((now - b.at) / 1000) * 5);
+    b.at = now;
+    this.rate.set(ws, b);
+    if (b.tokens < 1) return false;
+    b.tokens--;
+    return true;
+  }
+
+  async webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer) {
+    if (typeof raw !== 'string') return;
+    if (!this.allow(ws)) return this.send(ws, { t: 'error', message: 'ส่งคำสั่งเร็วเกินไป' });
+    const msg = parseClientMessage(raw);
+    if (!msg) return this.send(ws, { t: 'error', message: 'ข้อความไม่ถูกต้อง' });
+    if (!this.meta) return this.send(ws, { t: 'error', message: 'ไม่พบห้องนี้', fatal: true });
+
+    const att = (ws.deserializeAttachment() as Attachment | null) ?? { playerId: null };
+
+    if (msg.t === 'ping') return this.send(ws, { t: 'pong' });
+
+    if (msg.t === 'hello') {
+      const hash = await sha256(msg.token);
+      const p = this.players.find((x) => x.tokenHash === hash);
+      if (!p) {
+        this.send(ws, { t: 'error', message: 'ไม่สามารถยืนยันตัวตนในห้องนี้ได้', fatal: true });
+        return ws.close(4001, 'unauthorized');
+      }
+      ws.serializeAttachment({ playerId: p.id } satisfies Attachment);
+      this.send(ws, { t: 'welcome', playerId: p.id });
+      let dirty = false;
+      if (p.id === this.meta.hostId && this.meta.hostOfflineSince) { this.meta.hostOfflineSince = null; dirty = true; }
+      if (this.meta.offlineSince?.[p.id]) { delete this.meta.offlineSince[p.id]; dirty = true; }
+      if (this.meta.skipStreak?.[p.id]) { delete this.meta.skipStreak[p.id]; dirty = true; }
+      if (dirty) { await this.ctx.storage.put('meta', this.meta); await this.scheduleAlarm(); }
+      this.broadcastRoom();
+      return;
+    }
+
+    const playerId = att.playerId;
+    if (!playerId) return this.send(ws, { t: 'error', message: 'ยังไม่ได้ยืนยันตัวตน' });
+
+    if (msg.t === 'transfer_host') {
+      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', message: 'เฉพาะหัวห้องเท่านั้นที่มอบตำแหน่งได้' });
+      if (!this.players.some((p) => p.id === msg.playerId) || msg.playerId === playerId) {
+        return this.send(ws, { t: 'error', message: 'เลือกผู้เล่นไม่ถูกต้อง' });
+      }
+      this.setHost(msg.playerId, 'manual');
+      await this.persist();
+      this.broadcastRoom();
+      return;
+    }
+
+    if (msg.t === 'kick') {
+      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', message: 'เฉพาะหัวห้องเท่านั้นที่เชิญผู้เล่นออกได้' });
+      if (this.meta.status !== 'lobby') return this.send(ws, { t: 'error', message: 'เชิญผู้เล่นออกได้เฉพาะก่อนเริ่มเกม' });
+      const target = this.players.find((p) => p.id === msg.playerId);
+      if (!target || target.id === playerId) return this.send(ws, { t: 'error', message: 'เลือกผู้เล่นไม่ถูกต้อง' });
+      this.players = this.players.filter((p) => p.id !== target.id);
+      for (const s of this.ctx.getWebSockets()) {
+        if ((s.deserializeAttachment() as Attachment | null)?.playerId === target.id) {
+          s.serializeAttachment({ playerId: null } satisfies Attachment);
+          s.close(4003, 'kicked');
+        }
+      }
+      this.meta.version++;
+      this.notice(`${target.name} ถูกเชิญออกจากห้อง`);
+      await this.persist();
+      this.broadcastRoom();
+      return;
+    }
+
+    if (msg.t === 'skip_turn') {
+      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', message: 'เฉพาะหัวห้องเท่านั้นที่ข้ามเทิร์นได้' });
+      if (!this.activeOfflineSince()) return this.send(ws, { t: 'error', message: 'ข้ามได้เฉพาะเมื่อผู้เล่นที่ถึงตาหลุดการเชื่อมต่อ' });
+      await this.skipActive();
+      return;
+    }
+
+    if (msg.t === 'forfeit') {
+      if (this.meta.status !== 'playing' || !this.game) return this.send(ws, { t: 'error', message: 'ยอมแพ้ได้เฉพาะระหว่างเกม' });
+      await this.removeFromGame(playerId, 'ยอมแพ้', true);
+      return;
+    }
+
+    if (msg.t === 'remove_player') {
+      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', message: 'เฉพาะหัวห้องเท่านั้นที่นำผู้เล่นออกได้' });
+      if (this.meta.status !== 'playing' || !this.game) return this.send(ws, { t: 'error', message: 'นำผู้เล่นออกได้เฉพาะระหว่างเกม' });
+      if (msg.playerId === playerId || !this.game.players.some((p) => p.id === msg.playerId)) {
+        return this.send(ws, { t: 'error', message: 'เลือกผู้เล่นไม่ถูกต้อง' });
+      }
+      if (this.connectedIds().has(msg.playerId)) return this.send(ws, { t: 'error', message: 'นำออกได้เฉพาะผู้เล่นที่หลุดการเชื่อมต่อ' });
+      await this.removeFromGame(msg.playerId, 'หัวห้องนำออก');
+      return;
+    }
+
+    if (msg.t === 'leave') {
+      if (this.meta.status !== 'lobby') {
+        // Seats are part of the game state once it starts; leaving just disconnects (the player can return).
+        return ws.close(4002, 'left');
+      }
+      this.players = this.players.filter((p) => p.id !== playerId);
+      for (const s of this.ctx.getWebSockets()) {
+        if ((s.deserializeAttachment() as Attachment | null)?.playerId === playerId) {
+          s.serializeAttachment({ playerId: null } satisfies Attachment);
+          s.close(4002, 'left');
+        }
+      }
+      if (this.players.length === 0) return this.wipe();
+      this.meta.version++;
+      if (this.meta.hostId === playerId) {
+        const online = this.connectedIds();
+        this.setHost((this.players.find((p) => online.has(p.id)) ?? this.players[0]).id, 'left');
+      }
+      await this.persist();
+      this.broadcastRoom();
+      return;
+    }
+
+    if (msg.t === 'start') {
+      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', message: 'เฉพาะหัวห้องเท่านั้นที่เริ่มเกมได้' });
+      if (this.meta.status !== 'lobby') return this.send(ws, { t: 'error', message: 'เกมเริ่มไปแล้ว' });
+      if (this.players.length < MIN_PLAYERS) return this.send(ws, { t: 'error', message: `ต้องมีผู้เล่นอย่างน้อย ${MIN_PLAYERS} คน` });
+      const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+      this.game = createGame(this.players.map(({ id, name }) => ({ id, name })), this.deck(), seed);
+      this.meta.status = 'playing';
+      this.meta.version++;
+      await this.persist();
+      this.broadcastRoom();
+      return;
+    }
+
+    if (msg.t === 'action') {
+      if (this.processed.includes(msg.actionId)) return this.send(ws, { t: 'ack', actionId: msg.actionId }); // idempotent retry
+      if (!this.game) return this.send(ws, { t: 'error', message: 'เกมยังไม่เริ่ม', actionId: msg.actionId });
+      if (msg.expectedVersion !== this.meta.version) {
+        this.send(ws, { t: 'error', message: 'สถานะเกมมีการเปลี่ยนแปลง กรุณาลองอีกครั้ง', actionId: msg.actionId });
+        return this.send(ws, { t: 'room', room: this.view() });
+      }
+      const r = applyAction(this.game, playerId, msg.action);
+      if (!r.ok) return this.send(ws, { t: 'error', message: r.error, actionId: msg.actionId });
+      this.game = r.state;
+      if (r.state.phase === 'ended') this.meta.status = 'ended';
+      this.meta.version++;
+      this.processed.push(msg.actionId);
+      if (this.processed.length > PROCESSED_LIMIT) this.processed.splice(0, this.processed.length - PROCESSED_LIMIT);
+      await this.persist(); // persist before broadcasting the result
+      this.broadcastRoom();
+      this.send(ws, { t: 'ack', actionId: msg.actionId });
+    }
+  }
+
+  async webSocketClose(ws: WebSocket) {
+    this.rate.delete(ws);
+    try { ws.close(); } catch { /* already closed */ }
+    this.closing = ws;
+    if (this.meta) {
+      const pid = (ws.deserializeAttachment() as Attachment | null)?.playerId;
+      if (pid && !this.connectedIds().has(pid) && this.players.some((p) => p.id === pid)) {
+        this.meta.offlineSince = { ...this.meta.offlineSince, [pid]: Date.now() };
+        if (pid === this.meta.hostId && !this.meta.hostOfflineSince) this.meta.hostOfflineSince = Date.now();
+        await this.ctx.storage.put('meta', this.meta);
+        await this.scheduleAlarm();
+      }
+      this.broadcastRoom();
+    }
+    this.closing = null;
+  }
+
+  async webSocketError(ws: WebSocket) {
+    await this.webSocketClose(ws);
+  }
+}

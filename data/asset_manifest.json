@@ -1,0 +1,177 @@
+{
+  "status": "No card art in the repository. UI renders cards from data with emoji icons.",
+  "cards": [
+    {
+      "id": "sushi_bar",
+      "asset_path": null
+    },
+    {
+      "id": "wheat_field",
+      "asset_path": null
+    },
+    {
+      "id": "vineyard",
+      "asset_path": null
+    },
+    {
+      "id": "bakery",
+      "asset_path": null
+    },
+    {
+      "id": "cafe",
+      "asset_path": null
+    },
+    {
+      "id": "convenience_store",
+      "asset_path": null
+    },
+    {
+      "id": "flower_garden",
+      "asset_path": null
+    },
+    {
+      "id": "forest",
+      "asset_path": null
+    },
+    {
+      "id": "business_center",
+      "asset_path": null
+    },
+    {
+      "id": "flower_shop",
+      "asset_path": null
+    },
+    {
+      "id": "corn_field",
+      "asset_path": null
+    },
+    {
+      "id": "stadium",
+      "asset_path": null
+    },
+    {
+      "id": "furniture_factory",
+      "asset_path": null
+    },
+    {
+      "id": "hamburger_stand",
+      "asset_path": null
+    },
+    {
+      "id": "shopping_district",
+      "asset_path": null
+    },
+    {
+      "id": "winery",
+      "asset_path": null
+    },
+    {
+      "id": "family_restaurant",
+      "asset_path": null
+    },
+    {
+      "id": "apple_orchard",
+      "asset_path": null
+    },
+    {
+      "id": "food_warehouse",
+      "asset_path": null
+    },
+    {
+      "id": "mine",
+      "asset_path": null
+    },
+    {
+      "id": "airport",
+      "asset_path": null
+    },
+    {
+      "id": "amusement_park",
+      "asset_path": null
+    },
+    {
+      "id": "charterhouse",
+      "asset_path": null
+    },
+    {
+      "id": "exhibit_hall",
+      "asset_path": null
+    },
+    {
+      "id": "farmers_market",
+      "asset_path": null
+    },
+    {
+      "id": "forge",
+      "asset_path": null
+    },
+    {
+      "id": "french_restaurant",
+      "asset_path": null
+    },
+    {
+      "id": "launch_pad",
+      "asset_path": null
+    },
+    {
+      "id": "loan_office",
+      "asset_path": null
+    },
+    {
+      "id": "moving_company",
+      "asset_path": null
+    },
+    {
+      "id": "museum",
+      "asset_path": null
+    },
+    {
+      "id": "observatory",
+      "asset_path": null
+    },
+    {
+      "id": "park",
+      "asset_path": null
+    },
+    {
+      "id": "publisher",
+      "asset_path": null
+    },
+    {
+      "id": "radio_tower",
+      "asset_path": null
+    },
+    {
+      "id": "shopping_mall",
+      "asset_path": null
+    },
+    {
+      "id": "soda_bottling_plant",
+      "asset_path": null
+    },
+    {
+      "id": "tech_startup",
+      "asset_path": null
+    },
+    {
+      "id": "temple",
+      "asset_path": null
+    },
+    {
+      "id": "tv_station",
+      "asset_path": null
+    },
+    {
+      "id": "private_club",
+      "asset_path": null
+    },
+    {
+      "id": "city_hall",
+      "asset_path": null
+    },
+    {
+      "id": "renovation_company",
+      "asset_path": null
+    }
+  ]
+}

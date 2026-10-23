@@ -1,0 +1,226 @@
+{
+  "status": "UNVERIFIED — fill quantity_in_deck from the original rulebook/component list, then set it in src/cards.ts",
+  "rulebook_totals": {
+    "establishments": 86,
+    "landmarks": 20
+  },
+  "cards": [
+    {
+      "id": "sushi_bar",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "wheat_field",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "vineyard",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "bakery",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "cafe",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "convenience_store",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "flower_garden",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "forest",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "business_center",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "flower_shop",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "corn_field",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "stadium",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "furniture_factory",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "hamburger_stand",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "shopping_district",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "winery",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "family_restaurant",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "apple_orchard",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "food_warehouse",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "mine",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "airport",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "amusement_park",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "charterhouse",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "exhibit_hall",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "farmers_market",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "forge",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "french_restaurant",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "launch_pad",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "loan_office",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "moving_company",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "museum",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "observatory",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "park",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "publisher",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "radio_tower",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "shopping_mall",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "soda_bottling_plant",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "tech_startup",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "temple",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "tv_station",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "private_club",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "city_hall",
+      "quantity_in_deck": null
+    },
+    {
+      "id": "renovation_company",
+      "quantity_in_deck": null
+    }
+  ],
+  "demo_only_fixture": {
+    "sushi_bar": 4,
+    "wheat_field": 4,
+    "vineyard": 4,
+    "bakery": 4,
+    "cafe": 4,
+    "convenience_store": 4,
+    "flower_garden": 4,
+    "forest": 4,
+    "business_center": 3,
+    "flower_shop": 4,
+    "corn_field": 4,
+    "stadium": 3,
+    "furniture_factory": 4,
+    "hamburger_stand": 4,
+    "shopping_district": 3,
+    "winery": 4,
+    "family_restaurant": 4,
+    "apple_orchard": 4,
+    "food_warehouse": 4,
+    "mine": 4,
+    "airport": 1,
+    "amusement_park": 1,
+    "charterhouse": 1,
+    "exhibit_hall": 1,
+    "farmers_market": 1,
+    "forge": 1,
+    "french_restaurant": 1,
+    "launch_pad": 1,
+    "loan_office": 1,
+    "moving_company": 1,
+    "museum": 1,
+    "observatory": 1,
+    "park": 1,
+    "publisher": 1,
+    "radio_tower": 1,
+    "shopping_mall": 1,
+    "soda_bottling_plant": 1,
+    "tech_startup": 1,
+    "temple": 1,
+    "tv_station": 1,
+    "private_club": 1,
+    "city_hall": 1,
+    "renovation_company": 1
+  }
+}

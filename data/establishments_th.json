@@ -1,0 +1,491 @@
+[
+  {
+    "id": "sushi_bar",
+    "nameEn": "Sushi Bar",
+    "nameTh": "ซูชิบาร์",
+    "color": "red",
+    "symbol": "cup",
+    "tier": "low",
+    "activation": [
+      1
+    ],
+    "cost": 2,
+    "effectEn": "Take 3 coins from the active player. (opponent’s turn)",
+    "effectTh": "รับ 3 เหรียญจากผู้เล่นที่กำลังเล่นอยู่ (เฉพาะเทิร์นของผู้เล่นอื่น)",
+    "effect": {
+      "kind": "take_from_active",
+      "amount": 3
+    },
+    "type": "establishment",
+    "categoryTh": "แดง — ร้านอาหาร",
+    "timing": "opponent_turn",
+    "target": "active_player",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "wheat_field",
+    "nameEn": "Wheat Field",
+    "nameTh": "ไร่ข้าวสาลี",
+    "color": "blue",
+    "symbol": "wheat",
+    "tier": "low",
+    "activation": [
+      1,
+      2
+    ],
+    "cost": 1,
+    "effectEn": "Get 1 coin from the bank. (anyone’s turn)",
+    "effectTh": "รับ 1 เหรียญจากธนาคาร (ทุกเทิร์น)",
+    "effect": {
+      "kind": "bank",
+      "amount": 1
+    },
+    "type": "establishment",
+    "categoryTh": "ฟ้า — อุตสาหกรรมหลัก",
+    "timing": "anyone",
+    "target": "bank",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "vineyard",
+    "nameEn": "Vineyard",
+    "nameTh": "ไร่องุ่น",
+    "color": "blue",
+    "symbol": "fruit",
+    "tier": "low",
+    "activation": [
+      2
+    ],
+    "cost": 1,
+    "effectEn": "Get 2 coins from the bank. (anyone’s turn)",
+    "effectTh": "รับ 2 เหรียญจากธนาคาร (ทุกเทิร์น)",
+    "effect": {
+      "kind": "bank",
+      "amount": 2
+    },
+    "type": "establishment",
+    "categoryTh": "ฟ้า — อุตสาหกรรมหลัก",
+    "timing": "anyone",
+    "target": "bank",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "bakery",
+    "nameEn": "Bakery",
+    "nameTh": "ร้านเบเกอรี",
+    "color": "green",
+    "symbol": "shop",
+    "tier": "low",
+    "activation": [
+      2,
+      3
+    ],
+    "cost": 1,
+    "effectEn": "Get 2 coins from the bank. (your turn only)",
+    "effectTh": "รับ 2 เหรียญจากธนาคาร (เฉพาะเทิร์นของคุณ)",
+    "effect": {
+      "kind": "bank",
+      "amount": 2
+    },
+    "type": "establishment",
+    "categoryTh": "เขียว — อุตสาหกรรมรอง",
+    "timing": "your_turn",
+    "target": "bank",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "cafe",
+    "nameEn": "Café",
+    "nameTh": "คาเฟ่",
+    "color": "red",
+    "symbol": "cup",
+    "tier": "low",
+    "activation": [
+      3
+    ],
+    "cost": 1,
+    "effectEn": "Take 2 coins from the active player. (opponent’s turn)",
+    "effectTh": "รับ 2 เหรียญจากผู้เล่นที่กำลังเล่นอยู่ (เฉพาะเทิร์นของผู้เล่นอื่น)",
+    "effect": {
+      "kind": "take_from_active",
+      "amount": 2
+    },
+    "type": "establishment",
+    "categoryTh": "แดง — ร้านอาหาร",
+    "timing": "opponent_turn",
+    "target": "active_player",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "convenience_store",
+    "nameEn": "Convenience Store",
+    "nameTh": "ร้านสะดวกซื้อ",
+    "color": "green",
+    "symbol": "shop",
+    "tier": "low",
+    "activation": [
+      4
+    ],
+    "cost": 1,
+    "effectEn": "Get 3 coins from the bank. (your turn only)",
+    "effectTh": "รับ 3 เหรียญจากธนาคาร (เฉพาะเทิร์นของคุณ)",
+    "effect": {
+      "kind": "bank",
+      "amount": 3
+    },
+    "type": "establishment",
+    "categoryTh": "เขียว — อุตสาหกรรมรอง",
+    "timing": "your_turn",
+    "target": "bank",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "flower_garden",
+    "nameEn": "Flower Garden",
+    "nameTh": "สวนดอกไม้",
+    "color": "blue",
+    "symbol": "flower",
+    "tier": "low",
+    "activation": [
+      4
+    ],
+    "cost": 2,
+    "effectEn": "Get 2 coins from the bank. (anyone’s turn)",
+    "effectTh": "รับ 2 เหรียญจากธนาคาร (ทุกเทิร์น)",
+    "effect": {
+      "kind": "bank",
+      "amount": 2
+    },
+    "type": "establishment",
+    "categoryTh": "ฟ้า — อุตสาหกรรมหลัก",
+    "timing": "anyone",
+    "target": "bank",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "forest",
+    "nameEn": "Forest",
+    "nameTh": "ป่าไม้",
+    "color": "blue",
+    "symbol": "gear",
+    "tier": "low",
+    "activation": [
+      5
+    ],
+    "cost": 3,
+    "effectEn": "Get 2 coins from the bank. (anyone’s turn)",
+    "effectTh": "รับ 2 เหรียญจากธนาคาร (ทุกเทิร์น)",
+    "effect": {
+      "kind": "bank",
+      "amount": 2
+    },
+    "type": "establishment",
+    "categoryTh": "ฟ้า — อุตสาหกรรมหลัก",
+    "timing": "anyone",
+    "target": "bank",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "business_center",
+    "nameEn": "Business Center",
+    "nameTh": "ศูนย์ธุรกิจ",
+    "color": "purple",
+    "symbol": "tower",
+    "tier": "low",
+    "activation": [
+      6
+    ],
+    "cost": 3,
+    "effectEn": "Exchange 1 of your establishments for 1 an opponent owns. (your turn only)",
+    "effectTh": "คุณอาจแลกกิจการของคุณ 1 ใบกับกิจการของผู้เล่นอื่น 1 ใบ (เฉพาะเทิร์นของคุณ)",
+    "effect": {
+      "kind": "exchange"
+    },
+    "type": "establishment",
+    "categoryTh": "ม่วง — กิจการขนาดใหญ่",
+    "timing": "your_turn",
+    "target": "chosen_opponent",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "flower_shop",
+    "nameEn": "Flower Shop",
+    "nameTh": "ร้านดอกไม้",
+    "color": "green",
+    "symbol": "flower",
+    "tier": "low",
+    "activation": [
+      6
+    ],
+    "cost": 1,
+    "effectEn": "Get 3 coins from the bank for each flower-symbol establishment you own. (your turn only)",
+    "effectTh": "รับ 3 เหรียญจากธนาคารต่อกิจการสัญลักษณ์ดอกไม้แต่ละใบที่คุณมี (เฉพาะเทิร์นของคุณ)",
+    "effect": {
+      "kind": "bank_per_symbol",
+      "amount": 3,
+      "symbol": "flower"
+    },
+    "type": "establishment",
+    "categoryTh": "เขียว — อุตสาหกรรมรอง",
+    "timing": "your_turn",
+    "target": "bank",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "corn_field",
+    "nameEn": "Corn Field",
+    "nameTh": "ไร่ข้าวโพด",
+    "color": "blue",
+    "symbol": "wheat",
+    "tier": "high",
+    "activation": [
+      7
+    ],
+    "cost": 2,
+    "effectEn": "Get 3 coins from the bank. (anyone’s turn)",
+    "effectTh": "รับ 3 เหรียญจากธนาคาร (ทุกเทิร์น)",
+    "effect": {
+      "kind": "bank",
+      "amount": 3
+    },
+    "type": "establishment",
+    "categoryTh": "ฟ้า — อุตสาหกรรมหลัก",
+    "timing": "anyone",
+    "target": "bank",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "stadium",
+    "nameEn": "Stadium",
+    "nameTh": "สนามกีฬา",
+    "color": "purple",
+    "symbol": "tower",
+    "tier": "high",
+    "activation": [
+      7
+    ],
+    "cost": 3,
+    "effectEn": "Take 3 coins from each opponent. (your turn only)",
+    "effectTh": "รับ 3 เหรียญจากผู้เล่นอื่นแต่ละคน (เฉพาะเทิร์นของคุณ)",
+    "effect": {
+      "kind": "take_from_each",
+      "amount": 3
+    },
+    "type": "establishment",
+    "categoryTh": "ม่วง — กิจการขนาดใหญ่",
+    "timing": "your_turn",
+    "target": "each_opponent",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "furniture_factory",
+    "nameEn": "Furniture Factory",
+    "nameTh": "โรงงานเฟอร์นิเจอร์",
+    "color": "green",
+    "symbol": "gear",
+    "tier": "high",
+    "activation": [
+      8
+    ],
+    "cost": 4,
+    "effectEn": "Get 4 coins from the bank for each gear-symbol establishment you own. (your turn only)",
+    "effectTh": "รับ 4 เหรียญจากธนาคารต่อกิจการสัญลักษณ์เฟืองแต่ละใบที่คุณมี (เฉพาะเทิร์นของคุณ)",
+    "effect": {
+      "kind": "bank_per_symbol",
+      "amount": 4,
+      "symbol": "gear"
+    },
+    "type": "establishment",
+    "categoryTh": "เขียว — อุตสาหกรรมรอง",
+    "timing": "your_turn",
+    "target": "bank",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "hamburger_stand",
+    "nameEn": "Hamburger Stand",
+    "nameTh": "ร้านแฮมเบอร์เกอร์",
+    "color": "red",
+    "symbol": "cup",
+    "tier": "high",
+    "activation": [
+      8
+    ],
+    "cost": 1,
+    "effectEn": "Take 2 coins from the active player. (opponent’s turn)",
+    "effectTh": "รับ 2 เหรียญจากผู้เล่นที่กำลังเล่นอยู่ (เฉพาะเทิร์นของผู้เล่นอื่น)",
+    "effect": {
+      "kind": "take_from_active",
+      "amount": 2
+    },
+    "type": "establishment",
+    "categoryTh": "แดง — ร้านอาหาร",
+    "timing": "opponent_turn",
+    "target": "active_player",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "shopping_district",
+    "nameEn": "Shopping District",
+    "nameTh": "ย่านการค้า",
+    "color": "purple",
+    "symbol": "tower",
+    "tier": "high",
+    "activation": [
+      8,
+      9
+    ],
+    "cost": 3,
+    "effectEn": "From each opponent who has more than 10 coins, take half, rounded down. (your turn only)",
+    "effectTh": "รับเหรียญจากผู้เล่นอื่นแต่ละคนที่มีมากกว่า 10 เหรียญ เป็นจำนวนครึ่งหนึ่งของเหรียญที่ผู้เล่นคนนั้นมี โดยปัดเศษลง (เฉพาะเทิร์นของคุณ)",
+    "effect": {
+      "kind": "take_half_if_over",
+      "threshold": 10
+    },
+    "type": "establishment",
+    "categoryTh": "ม่วง — กิจการขนาดใหญ่",
+    "timing": "your_turn",
+    "target": "each_opponent",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "winery",
+    "nameEn": "Winery",
+    "nameTh": "โรงบ่มไวน์",
+    "color": "green",
+    "symbol": "fruit",
+    "tier": "high",
+    "activation": [
+      9
+    ],
+    "cost": 3,
+    "effectEn": "Get 3 coins from the bank for each fruit-symbol establishment you own. (your turn only)",
+    "effectTh": "รับ 3 เหรียญจากธนาคารต่อกิจการสัญลักษณ์ผลไม้แต่ละใบที่คุณมี (เฉพาะเทิร์นของคุณ)",
+    "effect": {
+      "kind": "bank_per_symbol",
+      "amount": 3,
+      "symbol": "fruit"
+    },
+    "type": "establishment",
+    "categoryTh": "เขียว — อุตสาหกรรมรอง",
+    "timing": "your_turn",
+    "target": "bank",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "family_restaurant",
+    "nameEn": "Family Restaurant",
+    "nameTh": "ร้านอาหารครอบครัว",
+    "color": "red",
+    "symbol": "cup",
+    "tier": "high",
+    "activation": [
+      9,
+      10
+    ],
+    "cost": 2,
+    "effectEn": "Take 2 coins from the active player. (opponent’s turn)",
+    "effectTh": "รับ 2 เหรียญจากผู้เล่นที่กำลังเล่นอยู่ (เฉพาะเทิร์นของผู้เล่นอื่น)",
+    "effect": {
+      "kind": "take_from_active",
+      "amount": 2
+    },
+    "type": "establishment",
+    "categoryTh": "แดง — ร้านอาหาร",
+    "timing": "opponent_turn",
+    "target": "active_player",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "apple_orchard",
+    "nameEn": "Apple Orchard",
+    "nameTh": "สวนแอปเปิล",
+    "color": "blue",
+    "symbol": "fruit",
+    "tier": "high",
+    "activation": [
+      10
+    ],
+    "cost": 1,
+    "effectEn": "Get 3 coins from the bank. (anyone’s turn)",
+    "effectTh": "รับ 3 เหรียญจากธนาคาร (ทุกเทิร์น)",
+    "effect": {
+      "kind": "bank",
+      "amount": 3
+    },
+    "type": "establishment",
+    "categoryTh": "ฟ้า — อุตสาหกรรมหลัก",
+    "timing": "anyone",
+    "target": "bank",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "food_warehouse",
+    "nameEn": "Food Warehouse",
+    "nameTh": "คลังอาหาร",
+    "color": "green",
+    "symbol": "cup",
+    "tier": "high",
+    "activation": [
+      10,
+      11
+    ],
+    "cost": 2,
+    "effectEn": "Get 2 coins from the bank for each cup-symbol establishment you own. (your turn only)",
+    "effectTh": "รับ 2 เหรียญจากธนาคารต่อกิจการสัญลักษณ์ถ้วยแต่ละใบที่คุณมี (เฉพาะเทิร์นของคุณ)",
+    "effect": {
+      "kind": "bank_per_symbol",
+      "amount": 2,
+      "symbol": "cup"
+    },
+    "type": "establishment",
+    "categoryTh": "เขียว — อุตสาหกรรมรอง",
+    "timing": "your_turn",
+    "target": "bank",
+    "assetPath": null,
+    "quantityInDeck": null
+  },
+  {
+    "id": "mine",
+    "nameEn": "Mine",
+    "nameTh": "เหมืองแร่",
+    "color": "blue",
+    "symbol": "gear",
+    "tier": "high",
+    "activation": [
+      11,
+      12
+    ],
+    "cost": 4,
+    "effectEn": "Get 6 coins from the bank. (anyone’s turn)",
+    "effectTh": "รับ 6 เหรียญจากธนาคาร (ทุกเทิร์น)",
+    "effect": {
+      "kind": "bank",
+      "amount": 6
+    },
+    "type": "establishment",
+    "categoryTh": "ฟ้า — อุตสาหกรรมหลัก",
+    "timing": "anyone",
+    "target": "bank",
+    "assetPath": null,
+    "quantityInDeck": null
+  }
+]

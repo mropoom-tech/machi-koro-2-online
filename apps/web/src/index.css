@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Prompt", "Sarabun", system-ui, sans-serif;
+  --font-body: "Sarabun", "Prompt", system-ui, sans-serif;
+  --color-red-card: #e2574c;
+  --color-blue-card: #3b8fd9;
+  --color-green-card: #3fae5a;
+  --color-purple-card: #8e5bc9;
+  --color-orange-card: #f08a24;
+  --color-coin: #f5b82e;
+  --color-felt: #0f766e;
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: radial-gradient(circle at 20% 0%, #d6f2ea 0%, #f5efe0 45%, #f1e4cc 100%) fixed;
+  color: #2b2620;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@keyframes dice-tumble {
+  0% { transform: rotate(0) scale(0.8); }
+  50% { transform: rotate(200deg) scale(1.1); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+.dice-rolling { animation: dice-tumble 0.35s linear infinite; }
+
+@keyframes pop-in {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pop-in { animation: pop-in 0.22s ease-out both; }
+
+@keyframes slide-up {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(0); }
+}
+.slide-up { animation: slide-up 0.25s ease-out both; }
+
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 184, 46, 0.7); }
+  50% { box-shadow: 0 0 0 6px rgba(245, 184, 46, 0); }
+}
+.turn-glow { animation: pulse-ring 1.6s ease-in-out infinite; }
+
+@keyframes coin-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+.coin-bump { animation: coin-bump 0.45s ease-out; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}

@@ -1,0 +1,44 @@
+# PROJECT_STATE — อัปเดต 2026-10-23
+
+## สรุปสถานะ Milestone
+| Milestone | สถานะ | หมายเหตุ |
+|---|---|---|
+| M0 Project Audit | ✅ | `docs/01_SOURCE_AUDIT.md` — มีแค่ master prompt + 2 translation refs; Rulebook/ภาพ/JSON เดิม = Missing Source |
+| M1 Core Engine | ✅ | `packages/game-engine` — 29 unit tests ผ่าน |
+| M2 Backend & Multiplayer | ✅ (local) | Worker + DO `GameRoom`, REST + WS, token auth, idempotency, state version, persistence, reconnect, TTL alarm |
+| M3 Frontend | ✅ | Landing, Create/Join, Lobby, Board, Card modal, Dice animation, Choice dialogs, Log, Victory, mobile layout |
+| M4 Integration | ✅ (local) | smoke 2/3/5 ผู้เล่น + bot เล่นจนจบเกม 2/4/5 ผู้เล่น + ทดสอบ 2 แท็บใน browser จริง (สร้าง/เข้าร่วม/สร้างการ์ด/ทอย/refresh กลับเข้าห้อง/มือถือ) |
+| M5 Deploy Prep | ✅ เตรียมแล้ว / ❌ ยังไม่ deploy | `.github/workflows/*`, `wrangler.toml`, `docs/DEPLOY.md` — **รออนุญาตก่อน deploy** |
+
+## สถาปัตยกรรม (สั้น)
+- Engine: `applyAction(state, playerId, action)` คืน state ใหม่ (structuredClone), RNG mulberry32 เก็บใน state, `toPublic()` ตัดกองการ์ด/RNG ก่อนส่ง client
+- ลำดับเอฟเฟกต์: แดง (ทวนเข็มจากผู้ทอย) → ฟ้า/เขียว → ม่วง → แลนด์มาร์กต่อเนื่อง → (เลือก) Business Center → Moving Company → ช่วงสร้าง (0 เหรียญ → รับ 1)
+- Server: 1 DO ต่อรหัสห้อง (`idFromName(code)`), เก็บ `meta/players/game/processed` ใน storage แล้วค่อย broadcast, ส่ง `room` ก่อน `ack`
+- Protocol: `packages/game-engine/src/protocol.ts` — client ส่ง `hello{token}` เป็นข้อความแรก
+- ห้อง: `leave` (ใน Lobby ลบที่นั่ง, หัวห้องออก→โอนให้คนที่ออนไลน์), `transfer_host` (เฉพาะหัวห้อง), หัวห้องหลุดเกิน 30 วิ → alarm โอนให้ผู้เล่นออนไลน์คนแรก; `kick` (หัวห้อง, เฉพาะ Lobby, close 4003); ผู้เล่นที่ถึงตาหลุด → หัวห้อง `skip_turn` ได้ทันที หรือ alarm ข้ามให้หลัง 45 วิ/เทิร์น (`forceSkipTurn` ใน engine: ไม่แลกศูนย์ธุรกิจ, บริษัทขนย้ายมอบใบถูกสุด, ไม่สร้าง, ยกเลิกเทิร์นเพิ่ม, ข้ามก่อนทอยไม่ได้เงินสนามบิน); `remove_player` (หัวห้อง, เฉพาะผู้เล่นที่ออฟไลน์) หรืออัตโนมัติเมื่อถูกข้าม 3 เทิร์นติดกัน (`removePlayer` ใน engine: การ์ดออกจากเกม, เหรียญคืนธนาคาร, เหลือ 1 คน = ชนะ, close 4004); `forfeit` (ผู้เล่นยอมแพ้เองระหว่างเกม — กลไกเดียวกับนำออก, close 4005); ระหว่างเกม "ออก" = ตัดการเชื่อมต่อ กลับมาได้
+- Client session: sessionStorage (ต่อแท็บ) + localStorage (fallback)
+
+## คำสั่งทดสอบ & ผลล่าสุด
+- `npm test` → 38/38 passed
+- `npm run typecheck` (engine/worker/web) → ผ่าน; `npm run build:web` → ผ่าน (JS 61 KB gzip)
+- `smoke.mjs` 2/3/5 ผู้เล่น → ALL PASSED
+- `forfeit.mjs` (ยอมแพ้ / คนสุดท้ายชนะ / โอนหัวห้อง) → ALL PASSED
+- `remove.mjs` (หัวห้องนำผู้เล่นออก / นำออกอัตโนมัติหลังข้าม 3 เทิร์น / คนสุดท้ายชนะ) → ALL PASSED (~2.5 นาที)
+- `skip.mjs` (เตะผู้เล่น / หัวห้องข้ามเทิร์น / ข้ามอัตโนมัติ 45 วิ / กลับมาเล่นต่อ) → ALL PASSED
+- `host.mjs` (ออกจากห้อง / มอบหัวห้อง / โอนอัตโนมัติหลังหลุด 30 วิ) → ALL PASSED
+- `fullgame.mjs` 2/4/5 ผู้เล่น → จบเกมด้วยแลนด์มาร์ก 3 แห่ง, action หลังจบถูกปฏิเสธ, ทุก client state ตรงกัน
+
+## ปัญหา/ความเสี่ยงที่ยังเหลือ
+1. **จำนวนสำเนาการ์ดไม่มีหลักฐาน** → DEMO_ONLY (ดู `docs/RULE_ISSUES.md`) — ต้องการ Rulebook ต้นฉบับ
+2. ข้อสันนิษฐานกติกา #3–#11 ใน RULE_ISSUES ต้องตรวจกับ Rulebook
+3. ไม่มีภาพการ์ด → ใช้การ์ดวาดจากข้อมูล + emoji
+4. ยังไม่ได้แยก `RoomDirectory` DO (ใช้ `idFromName(code)` ตรง ๆ + ตรวจชนรหัสตอนสร้าง) — เพียงพอสำหรับใช้กับเพื่อน
+5. ส่ง snapshot ทั้งห้องทุกครั้ง (ไม่ใช่ delta) — ขนาดเล็ก (~5–10 KB) จึงยังไม่จำเป็น
+6. (ปิดแล้ว) ระบบห้องครบ: ออก / มอบหัวห้อง / เชิญออก / ข้ามเทิร์น / นำออก / ยอมแพ้
+7. Wrangler 3.x (มี v4 แล้ว) — ควรอัปเดตก่อน deploy; npm บล็อก postinstall ของ esbuild/workerd แต่ยังรันได้
+8. ยังไม่ได้ทดสอบบน Cloudflare จริง (hibernation จริง, latency, โควตา)
+
+## Milestone ถัดไป
+- ได้ Rulebook → กรอก `quantityInDeck` + ปิดประเด็น RULE_ISSUES → เปิดโหมด VERIFIED
+- (ขออนุญาต) deploy Worker + GitHub Pages ตาม `docs/DEPLOY.md` แล้วทดสอบกับเพื่อนจริง
+- เพิ่ม: เสียง/แอนิเมชันเหรียญ, ภาพการ์ดเมื่อได้สิทธิ์
