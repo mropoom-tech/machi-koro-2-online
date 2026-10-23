@@ -2,7 +2,24 @@
 // Browsers only allow audio after a user gesture, so the context is created/resumed lazily.
 
 let ctx: AudioContext | null = null;
+let master: GainNode | null = null;
 const MUTE_KEY = 'mk2:muted';
+const VOLUME_KEY = 'mk2:volume';
+const DEFAULT_VOLUME = 0.5;
+
+/** Master volume 0..1 (remembered per browser). */
+export function getVolume(): number {
+  try {
+    const raw = localStorage.getItem(VOLUME_KEY);
+    const v = Number(raw);
+    return raw !== null && Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : DEFAULT_VOLUME;
+  } catch { return DEFAULT_VOLUME; }
+}
+export function setVolume(v: number) {
+  const vol = Math.min(1, Math.max(0, v));
+  try { localStorage.setItem(VOLUME_KEY, String(vol)); } catch { /* ignore */ }
+  if (master) master.gain.value = vol;
+}
 
 export function isMuted(): boolean {
   try { return localStorage.getItem(MUTE_KEY) === '1'; } catch { return false; }
@@ -14,11 +31,19 @@ export function setMuted(m: boolean) {
 function audio(): AudioContext | null {
   if (isMuted()) return null;
   try {
-    ctx ??= new AudioContext();
+    if (!ctx) {
+      ctx = new AudioContext();
+      master = ctx.createGain();
+      master.connect(ctx.destination);
+    }
+    master!.gain.value = getVolume();
     if (ctx.state === 'suspended') void ctx.resume();
     return ctx;
   } catch { return null; }
 }
+
+/** Everything goes through the master gain so the volume setting applies to all sounds. */
+const out = () => master!;
 
 // Unlock audio on the first interaction so later, non-click sounds (opponents' rolls) can play.
 if (typeof window !== 'undefined') {
@@ -41,7 +66,7 @@ function clack(ac: AudioContext, at: number, gain: number) {
   bp.Q.value = 2.5;
   const g = ac.createGain();
   g.gain.value = gain;
-  src.connect(bp).connect(g).connect(ac.destination);
+  src.connect(bp).connect(g).connect(out());
   src.start(at);
 }
 
@@ -50,8 +75,8 @@ export function playDiceRoll(dice = 2) {
   const ac = audio();
   if (!ac) return;
   const t = ac.currentTime;
-  for (let i = 0; i < 9; i++) clack(ac, t + i * 0.075 + Math.random() * 0.02, 0.35);
-  for (let d = 0; d < dice; d++) clack(ac, t + 0.78 + d * 0.06, 0.9); // landing
+  for (let i = 0; i < 9; i++) clack(ac, t + i * 0.075 + Math.random() * 0.02, 0.2);
+  for (let d = 0; d < dice; d++) clack(ac, t + 0.78 + d * 0.06, 0.5); // landing
 }
 
 function tone(ac: AudioContext, freq: number, at: number, dur: number, gain = 0.22) {
@@ -62,7 +87,7 @@ function tone(ac: AudioContext, freq: number, at: number, dur: number, gain = 0.
   g.gain.setValueAtTime(0, at);
   g.gain.linearRampToValueAtTime(gain, at + 0.02);
   g.gain.exponentialRampToValueAtTime(0.001, at + dur);
-  o.connect(g).connect(ac.destination);
+  o.connect(g).connect(out());
   o.start(at);
   o.stop(at + dur + 0.05);
 }

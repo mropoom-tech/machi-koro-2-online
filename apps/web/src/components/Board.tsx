@@ -5,7 +5,8 @@ import {
 } from '@mk2/game-engine';
 import { CardDetail, CardTile, SymbolSummary } from './Card';
 import { Button, Coin, DemoBadge, Modal, ScrollRow } from './ui';
-import { isMuted, playDiceRoll, playYourTurn, setMuted } from '../sound';
+import { playDiceRoll, playYourTurn } from '../sound';
+import { SoundSettings } from './SoundSettings';
 import { LangToggle, useI18n, type UiKey } from '../i18n';
 import type { ConnState } from '../net';
 
@@ -371,8 +372,6 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
   const lastLog = g.log.at(-1);
 
   // ---- sound effects
-  const [muted, setMutedState] = useState(isMuted);
-  const toggleMute = () => { setMuted(!muted); setMutedState(!muted); };
   useEffect(() => {
     if (reveal.stage === 'rolling') playDiceRoll(reveal.dice);
   }, [reveal.stage]);
@@ -392,10 +391,7 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
           <div className="text-sm">{u('room')} <b className="tracking-widest">{room.code}</b></div>
           {room.deckMode === 'DEMO_ONLY' && <DemoBadge />}
           <LangToggle />
-          <button onClick={toggleMute} aria-pressed={muted} title={u(muted ? 'sound_on' : 'sound_off')}
-            className="rounded-full px-2 py-0.5 text-lg leading-none opacity-90 ring-1 ring-white/30 hover:opacity-100">
-            {muted ? '🔇' : '🔊'}
-          </button>
+          <SoundSettings />
           {conn !== 'open' && <span className="rounded-full bg-amber-400 px-2 py-0.5 text-xs font-semibold text-amber-950">{u('reconnecting')}</span>}
           <div className="ml-auto flex items-center gap-3">
             <div className="text-right leading-tight">

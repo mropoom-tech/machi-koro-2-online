@@ -166,8 +166,15 @@ const UI = {
     en: '⚠️ The text printed on this card image is inaccurate — use the text below',
   },
   copies: { th: (p) => `${p.n} ใบ`, en: (p) => `${p.n} copies` },
-  sound_on: { th: 'เปิดเสียง', en: 'Sound on' },
-  sound_off: { th: 'ปิดเสียง', en: 'Mute' },
+  sound_settings: { th: 'ตั้งค่าเสียง', en: 'Sound settings' },
+  volume: { th: 'ระดับเสียง', en: 'Volume' },
+  volume_up: { th: 'เพิ่มเสียง', en: 'Volume up' },
+  volume_down: { th: 'ลดเสียง', en: 'Volume down' },
+  mute_all: { th: 'ปิดเสียงทั้งหมด', en: 'Mute all sounds' },
+  unmute: { th: 'เปิดเสียงอีกครั้ง', en: 'Unmute' },
+  muted: { th: 'ปิดเสียงอยู่', en: 'Muted' },
+  test_dice: { th: 'ลองเสียงเต๋า', en: 'Test dice' },
+  test_turn: { th: 'ลองเสียงถึงตา', en: 'Test turn' },
 } satisfies Record<string, Entry>;
 
 export type UiKey = keyof typeof UI;
