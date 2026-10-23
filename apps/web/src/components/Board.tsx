@@ -422,6 +422,10 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
           {room.deckMode === 'DEMO_ONLY' && <DemoBadge />}
           <LangToggle />
           <SoundSettings />
+          <button onClick={() => setOverviewOpen(true)} title={u('all_cities')}
+            className="rounded-full bg-white/80 px-3 py-1 text-sm font-semibold text-slate-700 ring-1 ring-black/10 hover:bg-white">
+            🏙️ <span className="hidden sm:inline">{u('all_cities')}</span>
+          </button>
           {conn !== 'open' && <span className="rounded-full bg-amber-400 px-2 py-0.5 text-xs font-semibold text-amber-950">{u('reconnecting')}</span>}
           <div className="ml-auto flex items-center gap-3">
             <div className="text-right leading-tight">
