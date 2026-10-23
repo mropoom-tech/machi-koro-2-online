@@ -7,3 +7,5 @@ dist/
 *.log
 reference_assets/
 ~$*
+asset/
+apps/worker/card-assets/
