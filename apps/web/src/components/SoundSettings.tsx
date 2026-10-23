@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { getVolume, isMuted, playBuild, playCoin, playDiceRoll, playLandmark, playVictory, playYourTurn, setMuted, setVolume } from '../sound';
 import { useI18n } from '../i18n';
-import { getMusicVolume, isMusicOn, setMusicOn, setMusicVolume } from '../music';
 
 /** Header button that opens a small panel: volume slider, − / + buttons, mute, and test sounds. */
 export function SoundSettings({ align = 'left' }: { align?: 'left' | 'right' }) {
@@ -29,14 +28,6 @@ export function SoundSettings({ align = 'left' }: { align?: 'left' | 'right' }) 
     if (next > 0 && muted) { setMuted(false); setMutedState(false); }
   };
   const toggleMute = () => { setMuted(!muted); setMutedState(!muted); };
-  const [musicOn, setMusicOnState] = useState(isMusicOn);
-  const [musicVol, setMusicVolState] = useState(() => Math.round(getMusicVolume() * 100));
-  const changeMusic = (v: number) => {
-    const next = Math.min(100, Math.max(0, v));
-    setMusicVolState(next);
-    setMusicVolume(next / 100);
-  };
-  const toggleMusic = () => { setMusicOn(!musicOn); setMusicOnState(!musicOn); };
   const icon = muted || volume === 0 ? '🔇' : volume < 40 ? '🔈' : volume < 75 ? '🔉' : '🔊';
 
   return (
@@ -66,21 +57,6 @@ export function SoundSettings({ align = 'left' }: { align?: 'left' | 'right' }) 
             className={`mb-3 w-full rounded-xl px-3 py-2 text-sm font-semibold transition ${muted ? 'bg-rose-600 text-white' : 'bg-slate-100 hover:bg-slate-200'}`}>
             {muted ? `🔊 ${u('unmute')}` : `🔇 ${u('mute_all')}`}
           </button>
-          <div className="mb-3 border-t pt-3">
-            <div className="mb-1 flex items-center justify-between text-sm">
-              <span className="text-slate-600">🎵 {u('music')}</span>
-              <button type="button" role="switch" aria-checked={musicOn} onClick={toggleMusic} aria-label={u('music')}
-                className={`relative h-6 w-11 rounded-full transition ${musicOn ? 'bg-teal-600' : 'bg-slate-300'}`}>
-                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${musicOn ? 'left-[22px]' : 'left-0.5'}`} />
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <input type="range" min={0} max={100} step={5} value={musicVol} disabled={!musicOn}
-                onChange={(e) => changeMusic(Number(e.target.value))} aria-label={u('music_volume')}
-                className="h-2 flex-1 cursor-pointer accent-teal-700 disabled:opacity-40" />
-              <span className="w-10 text-right text-sm tabular-nums text-slate-500">{musicOn ? `${musicVol}%` : u('off')}</span>
-            </div>
-          </div>
           <div className="grid grid-cols-3 gap-2 text-xs">
             <button type="button" onClick={() => playDiceRoll(2)} disabled={muted}
               className="rounded-lg bg-teal-50 px-2 py-1.5 font-medium text-teal-800 hover:bg-teal-100 disabled:opacity-40">🎲 {u('test_dice')}</button>

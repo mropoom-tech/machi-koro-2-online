@@ -28,7 +28,7 @@ export function setMuted(m: boolean) {
   try { localStorage.setItem(MUTE_KEY, m ? '1' : '0'); } catch { /* ignore */ }
 }
 
-/** Shared AudioContext (also used by background music). Null if the browser has no Web Audio. */
+/** Shared AudioContext. Null if the browser has no Web Audio. */
 export function audioContext(): AudioContext | null {
   try {
     if (!ctx) {

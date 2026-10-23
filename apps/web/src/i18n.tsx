@@ -180,9 +180,6 @@ const UI = {
   test_landmark: { th: 'ลองเสียงแลนด์มาร์ก', en: 'Test landmark' },
   test_victory: { th: 'ลองเสียงชนะเกม', en: 'Test victory' },
   sfx: { th: 'เสียงเอฟเฟกต์', en: 'Sound effects' },
-  music: { th: 'เพลงพื้นหลัง', en: 'Background music' },
-  music_volume: { th: 'ระดับเสียงเพลง', en: 'Music volume' },
-  off: { th: 'ปิด', en: 'Off' },
 } satisfies Record<string, Entry>;
 
 export type UiKey = keyof typeof UI;
