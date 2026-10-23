@@ -28,18 +28,25 @@ export function setMuted(m: boolean) {
   try { localStorage.setItem(MUTE_KEY, m ? '1' : '0'); } catch { /* ignore */ }
 }
 
-function audio(): AudioContext | null {
-  if (isMuted()) return null;
+/** Shared AudioContext (also used by background music). Null if the browser has no Web Audio. */
+export function audioContext(): AudioContext | null {
   try {
     if (!ctx) {
       ctx = new AudioContext();
       master = ctx.createGain();
       master.connect(ctx.destination);
     }
-    master!.gain.value = getVolume();
     if (ctx.state === 'suspended') void ctx.resume();
     return ctx;
   } catch { return null; }
+}
+
+/** Context for sound effects, or null when effects are muted. */
+function audio(): AudioContext | null {
+  if (isMuted()) return null;
+  const ac = audioContext();
+  if (ac) master!.gain.value = getVolume();
+  return ac;
 }
 
 /** Everything goes through the master gain so the volume setting applies to all sounds. */
@@ -47,7 +54,7 @@ const out = () => master!;
 
 // Unlock audio on the first interaction so later, non-click sounds (opponents' rolls) can play.
 if (typeof window !== 'undefined') {
-  const unlock = () => { audio(); window.removeEventListener('pointerdown', unlock); window.removeEventListener('keydown', unlock); };
+  const unlock = () => { audioContext(); window.removeEventListener('pointerdown', unlock); window.removeEventListener('keydown', unlock); };
   window.addEventListener('pointerdown', unlock);
   window.addEventListener('keydown', unlock);
 }

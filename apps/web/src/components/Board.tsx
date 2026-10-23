@@ -6,6 +6,7 @@ import {
 import { CardDetail, CardTile, SymbolSummary } from './Card';
 import { Button, Coin, DemoBadge, Modal, ScrollRow } from './ui';
 import { playBuild, playCoin, playDiceRoll, playGameOver, playLandmark, playVictory, playYourTurn } from '../sound';
+import { startMusic, stopMusic } from '../music';
 import { SoundSettings } from './SoundSettings';
 import { LangToggle, useI18n, type UiKey } from '../i18n';
 import type { ConnState } from '../net';
@@ -384,6 +385,14 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
     if (fresh.some((e) => e.key === 'build_landmark')) playLandmark();
     else if (fresh.some((e) => e.key === 'build')) playBuild();
   }, [lastSeq]);
+
+  // Background music while the game is running; fades out when the game ends or you leave.
+  const gameOver = !!winner || g.phase === 'ended';
+  useEffect(() => {
+    if (gameOver) { stopMusic(1.5); return; }
+    startMusic();
+    return () => stopMusic();
+  }, [gameOver]);
 
   // End-of-game sound, once, when the victory screen appears (after the final roll is revealed).
   const winnerId = winner?.id ?? null;

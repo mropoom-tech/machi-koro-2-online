@@ -177,8 +177,12 @@ const UI = {
   test_turn: { th: 'ลองเสียงถึงตา', en: 'Test turn' },
   test_coin: { th: 'ลองเสียงเหรียญ', en: 'Test coin' },
   test_build: { th: 'ลองเสียงสร้าง', en: 'Test build' },
-  test_landmark: { th: 'ลองเสียงสร้างแลนด์มาร์ก', en: 'Test landmark' },
+  test_landmark: { th: 'ลองเสียงแลนด์มาร์ก', en: 'Test landmark' },
   test_victory: { th: 'ลองเสียงชนะเกม', en: 'Test victory' },
+  sfx: { th: 'เสียงเอฟเฟกต์', en: 'Sound effects' },
+  music: { th: 'เพลงพื้นหลัง', en: 'Background music' },
+  music_volume: { th: 'ระดับเสียงเพลง', en: 'Music volume' },
+  off: { th: 'ปิด', en: 'Off' },
 } satisfies Record<string, Entry>;
 
 export type UiKey = keyof typeof UI;
