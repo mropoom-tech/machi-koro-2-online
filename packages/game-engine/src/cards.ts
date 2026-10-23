@@ -2,7 +2,9 @@
 // English text is kept for traceability. quantityInDeck stays null: no verified source exists.
 
 export type EstablishmentColor = 'red' | 'blue' | 'green' | 'purple';
-export type CardSymbol = 'cup' | 'wheat' | 'fruit' | 'shop' | 'flower' | 'gear' | 'tower';
+// Icons printed on the establishment cards (verified from the card art). 'tower' is the purple Major icon.
+// 'combo' cards carry no icon of their own, so they never count toward any symbol (Rulebook p.6 Winery example).
+export type CardSymbol = 'cup' | 'wheat' | 'fruit' | 'shop' | 'flower' | 'gear' | 'tower' | 'combo';
 export type Tier = 'low' | 'high';
 
 export type EstablishmentEffect =
@@ -118,7 +120,7 @@ export const ESTABLISHMENTS: EstablishmentCard[] = [
   est({ id: 'business_center', nameEn: 'Business Center', nameTh: 'ศูนย์ธุรกิจ', color: 'purple', symbol: 'tower', tier: 'low', activation: [6], cost: 3,
     effectEn: 'Exchange 1 of your establishments for 1 an opponent owns. (your turn only)', effectTh: 'คุณอาจแลกกิจการของคุณ 1 ใบกับกิจการของผู้เล่นอื่น 1 ใบ (เฉพาะเทิร์นของคุณ)',
     effect: { kind: 'exchange' } }),
-  est({ id: 'flower_shop', nameEn: 'Flower Shop', nameTh: 'ร้านดอกไม้', color: 'green', symbol: 'flower', tier: 'low', activation: [6], cost: 1,
+  est({ id: 'flower_shop', nameEn: 'Flower Shop', nameTh: 'ร้านดอกไม้', color: 'green', symbol: 'combo', tier: 'low', activation: [6], cost: 1,
     effectEn: 'Get 3 coins from the bank for each flower-symbol establishment you own. (your turn only)', effectTh: 'รับ 3 เหรียญจากธนาคารต่อกิจการสัญลักษณ์ดอกไม้แต่ละใบที่คุณมี (เฉพาะเทิร์นของคุณ)',
     effect: { kind: 'bank_per_symbol', amount: 3, symbol: 'flower' } }),
   est({ id: 'corn_field', nameEn: 'Corn Field', nameTh: 'ไร่ข้าวโพด', color: 'blue', symbol: 'wheat', tier: 'high', activation: [7], cost: 2,
@@ -127,7 +129,7 @@ export const ESTABLISHMENTS: EstablishmentCard[] = [
   est({ id: 'stadium', nameEn: 'Stadium', nameTh: 'สนามกีฬา', color: 'purple', symbol: 'tower', tier: 'high', activation: [7], cost: 3,
     effectEn: 'Take 3 coins from each opponent. (your turn only)', effectTh: 'รับ 3 เหรียญจากผู้เล่นอื่นแต่ละคน (เฉพาะเทิร์นของคุณ)',
     effect: { kind: 'take_from_each', amount: 3 } }),
-  est({ id: 'furniture_factory', nameEn: 'Furniture Factory', nameTh: 'โรงงานเฟอร์นิเจอร์', color: 'green', symbol: 'gear', tier: 'high', activation: [8], cost: 4,
+  est({ id: 'furniture_factory', nameEn: 'Furniture Factory', nameTh: 'โรงงานเฟอร์นิเจอร์', color: 'green', symbol: 'combo', tier: 'high', activation: [8], cost: 4,
     effectEn: 'Get 4 coins from the bank for each gear-symbol establishment you own. (your turn only)', effectTh: 'รับ 4 เหรียญจากธนาคารต่อกิจการสัญลักษณ์เฟืองแต่ละใบที่คุณมี (เฉพาะเทิร์นของคุณ)',
     effect: { kind: 'bank_per_symbol', amount: 4, symbol: 'gear' } }),
   est({ id: 'hamburger_stand', nameEn: 'Hamburger Stand', nameTh: 'ร้านแฮมเบอร์เกอร์', color: 'red', symbol: 'cup', tier: 'high', activation: [8], cost: 1,
@@ -136,7 +138,7 @@ export const ESTABLISHMENTS: EstablishmentCard[] = [
   est({ id: 'shopping_district', nameEn: 'Shopping District', nameTh: 'ย่านการค้า', color: 'purple', symbol: 'tower', tier: 'high', activation: [8, 9], cost: 3,
     effectEn: 'From each opponent who has more than 10 coins, take half, rounded down. (your turn only)', effectTh: 'รับเหรียญจากผู้เล่นอื่นแต่ละคนที่มีมากกว่า 10 เหรียญ เป็นจำนวนครึ่งหนึ่งของเหรียญที่ผู้เล่นคนนั้นมี โดยปัดเศษลง (เฉพาะเทิร์นของคุณ)',
     effect: { kind: 'take_half_if_over', threshold: 10 } }),
-  est({ id: 'winery', nameEn: 'Winery', nameTh: 'โรงบ่มไวน์', color: 'green', symbol: 'fruit', tier: 'high', activation: [9], cost: 3,
+  est({ id: 'winery', nameEn: 'Winery', nameTh: 'โรงบ่มไวน์', color: 'green', symbol: 'combo', tier: 'high', activation: [9], cost: 3,
     effectEn: 'Get 3 coins from the bank for each fruit-symbol establishment you own. (your turn only)', effectTh: 'รับ 3 เหรียญจากธนาคารต่อกิจการสัญลักษณ์ผลไม้แต่ละใบที่คุณมี (เฉพาะเทิร์นของคุณ)',
     effect: { kind: 'bank_per_symbol', amount: 3, symbol: 'fruit' } }),
   est({ id: 'family_restaurant', nameEn: 'Family Restaurant', nameTh: 'ร้านอาหารครอบครัว', color: 'red', symbol: 'cup', tier: 'high', activation: [9, 10], cost: 2,
@@ -145,7 +147,7 @@ export const ESTABLISHMENTS: EstablishmentCard[] = [
   est({ id: 'apple_orchard', nameEn: 'Apple Orchard', nameTh: 'สวนแอปเปิล', color: 'blue', symbol: 'fruit', tier: 'high', activation: [10], cost: 1,
     effectEn: 'Get 3 coins from the bank. (anyone’s turn)', effectTh: 'รับ 3 เหรียญจากธนาคาร (ทุกเทิร์น)',
     effect: { kind: 'bank', amount: 3 } }),
-  est({ id: 'food_warehouse', nameEn: 'Food Warehouse', nameTh: 'คลังอาหาร', color: 'green', symbol: 'cup', tier: 'high', activation: [10, 11], cost: 2,
+  est({ id: 'food_warehouse', nameEn: 'Food Warehouse', nameTh: 'คลังอาหาร', color: 'green', symbol: 'combo', tier: 'high', activation: [10, 11], cost: 2,
     effectEn: 'Get 2 coins from the bank for each cup-symbol establishment you own. (your turn only)', effectTh: 'รับ 2 เหรียญจากธนาคารต่อกิจการสัญลักษณ์ถ้วยแต่ละใบที่คุณมี (เฉพาะเทิร์นของคุณ)',
     effect: { kind: 'bank_per_symbol', amount: 2, symbol: 'cup' } }),
   est({ id: 'mine', nameEn: 'Mine', nameTh: 'เหมืองแร่', color: 'blue', symbol: 'gear', tier: 'high', activation: [11, 12], cost: 4,
@@ -254,5 +256,5 @@ export function getLandmark(id: string): LandmarkCard {
 }
 
 export const SYMBOL_TH: Record<CardSymbol, string> = {
-  cup: 'ถ้วย', wheat: 'รวงข้าว', fruit: 'ผลไม้', shop: 'ร้านค้า', flower: 'ดอกไม้', gear: 'เฟือง', tower: 'อาคารเสา',
+  cup: 'ถ้วย', wheat: 'รวงข้าว', fruit: 'ผลไม้', shop: 'ร้านค้า', flower: 'ดอกไม้', gear: 'เฟือง', tower: 'อาคารเสา', combo: 'คอมโบ',
 };

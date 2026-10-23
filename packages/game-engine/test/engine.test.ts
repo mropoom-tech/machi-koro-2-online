@@ -178,15 +178,26 @@ describe('income activation', () => {
     expect(s.players[0].coins).toBe(2);
   });
 
-  it('symbol multipliers count all copies (Flower Shop / Furniture Factory / Food Warehouse)', () => {
+  it('combo cards count every copy of the symbol but carry no symbol themselves', () => {
     let s = game(2);
     s.players[0].establishments = { flower_shop: 1, flower_garden: 2 };
     s = act(s, 'p0', { type: 'roll', dice: 1 }, [6]);
-    expect(s.players[0].coins).toBe(9);
+    expect(s.players[0].coins).toBe(6); // 3 × 2 flower gardens (the shop itself is COMBO)
     s = game(2);
-    s.players[0].establishments = { furniture_factory: 1, forest: 1, mine: 1 };
+    s.players[0].establishments = { furniture_factory: 2, forest: 1, mine: 1 };
     s = act(s, 'p0', { type: 'roll', dice: 2 }, [4, 4]);
-    expect(s.players[0].coins).toBe(12);
+    expect(s.players[0].coins).toBe(16); // each factory: 4 × 2 gears
+    s = game(2);
+    s.players[0].establishments = { food_warehouse: 1, cafe: 2, sushi_bar: 1 };
+    s = act(s, 'p0', { type: 'roll', dice: 2 }, [5, 5]);
+    expect(s.players[0].coins).toBe(6); // 2 × 3 cups, warehouse not counted
+  });
+
+  it('Rulebook p.6 example: 2 Vineyards + 1 Apple Orchard → Winery earns 3×3 = 9', () => {
+    let s = game(2);
+    s.players[0].establishments = { winery: 1, vineyard: 2, apple_orchard: 1 };
+    s = act(s, 'p0', { type: 'roll', dice: 2 }, [4, 5]);
+    expect(s.players[0].coins).toBe(9);
   });
 
   it('Farmers Market / Soda Bottling Plant add +1 per activated card for everyone', () => {
@@ -322,7 +333,7 @@ describe('landmarks', () => {
     s.players[1].landmarks = ['renovation_company'];
     s.players[0].establishments = { cafe: 2, food_warehouse: 1 };
     s = act(s, 'p0', { type: 'roll', dice: 2 }, [2, 4]);
-    expect(s.players[0].coins).toBe(3);
+    expect(s.players[0].coins).toBe(2); // 2 cups (Food Warehouse is COMBO)
   });
 
   it('immediate landmark effects: French Restaurant, Museum, TV Station, Private Club, Exhibit Hall', () => {

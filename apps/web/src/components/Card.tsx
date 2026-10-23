@@ -3,9 +3,32 @@ import { getCard, type Card as CardData, type CardSymbol } from '@mk2/game-engin
 import { TH_IMAGE_ISSUES, useI18n, type UiKey } from '../i18n';
 import { cardImageUrl } from '../net';
 
+// Matches the icons printed on the cards (see docs/RULE_ISSUES.md — symbols).
 export const SYMBOL_ICON: Record<CardSymbol, string> = {
-  cup: '☕', wheat: '🌾', fruit: '🍇', shop: '🏪', flower: '🌸', gear: '⚙️', tower: '🏛️',
+  cup: '☕', wheat: '🌾', fruit: '🍎', shop: '🏠', flower: '🌷', gear: '⚙️', tower: '🏛️', combo: '✨',
 };
+/** Symbols that cards and landmarks count, in display order. */
+export const COUNTED_SYMBOLS: CardSymbol[] = ['cup', 'wheat', 'fruit', 'shop', 'flower', 'gear', 'tower'];
+
+/** Big, readable symbol badge shown on top of a card's printed icon. */
+export function SymbolBadge({ symbol, size = 'md' }: { symbol: CardSymbol; size?: 'sm' | 'md' }) {
+  const { symbol: name } = useI18n();
+  if (symbol === 'combo') {
+    return (
+      <span title={name(symbol)}
+        className="absolute -left-1.5 -top-2 z-10 rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-amber-950 shadow ring-2 ring-white">
+        combo
+      </span>
+    );
+  }
+  const dim = size === 'sm' ? 'h-7 w-7 text-base' : 'h-8 w-8 text-lg';
+  return (
+    <span title={name(symbol)}
+      className={`absolute -left-2 -top-2 z-10 flex ${dim} items-center justify-center rounded-full bg-white leading-none shadow-md ring-2 ring-slate-300`}>
+      {SYMBOL_ICON[symbol]}
+    </span>
+  );
+}
 
 const CARD_ICON: Record<string, string> = {
   sushi_bar: '🍣', wheat_field: '🌾', vineyard: '🍇', bakery: '🥐', cafe: '☕', convenience_store: '🏪',
@@ -79,7 +102,6 @@ export function CardTile({ cardId, count, cost, dim, highlight, size = 'md', onC
         <>
           <div className={`${col.bg} flex h-6 items-center justify-between rounded-t-xl px-1.5 text-[11px] font-semibold text-white`}>
             <span>{activationLabel(c) || '★'}</span>
-            {c.type === 'establishment' && <span>{SYMBOL_ICON[c.symbol]}</span>}
           </div>
           <div className={`flex items-center justify-center ${size === 'sm' ? 'h-9 text-2xl' : 'h-12 text-3xl'}`}>{cardIcon(cardId)}</div>
           <div className={`min-h-[2.2em] px-1.5 pb-1.5 text-center font-semibold leading-tight ${size === 'sm' ? 'text-[10px]' : 'text-[11px] sm:text-xs'}`}>
@@ -93,6 +115,7 @@ export function CardTile({ cardId, count, cost, dim, highlight, size = 'md', onC
           {displayCost}
         </div>
       )}
+      {c.type === 'establishment' && <SymbolBadge symbol={c.symbol} size={size} />}
       {count !== undefined && count > 1 && (
         <div className="absolute -right-2 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-slate-800 px-1 text-[11px] font-bold text-white ring-2 ring-white">
           ×{count}
@@ -133,7 +156,7 @@ export function CardDetail({ cardId }: { cardId: string }) {
         {c.type === 'establishment' && (
           <>
             <span className="rounded-full bg-slate-100 px-2 py-1">{u('activation')}: <b>{c.activation.join(', ')}</b></span>
-            <span className="rounded-full bg-slate-100 px-2 py-1">{u('symbol')}: {SYMBOL_ICON[c.symbol]} {symbol(c.symbol)}</span>
+            <span className="rounded-full bg-slate-100 px-2 py-1">{u('symbol')}: <span className="text-base">{SYMBOL_ICON[c.symbol]}</span> {symbol(c.symbol)}</span>
             <span className="rounded-full bg-amber-100 px-2 py-1">{u('cost', { n: c.cost })}</span>
           </>
         )}
@@ -152,6 +175,28 @@ export function CardDetail({ cardId }: { cardId: string }) {
         <p className="mt-2 rounded-lg bg-amber-50 p-2 text-sm text-amber-900">{u('condition')}: {u('loan_condition')}</p>
       )}
       <p className="mt-3 border-t pt-2 text-xs italic text-slate-500">{otherEffect}</p>
+    </div>
+  );
+}
+
+/** Per-city count of each symbol (every copy counts) — what combo cards and landmarks look at. */
+export function SymbolSummary({ establishments, className = '' }: { establishments: Record<string, number>; className?: string }) {
+  const { symbol: name } = useI18n();
+  const counts = new Map<CardSymbol, number>();
+  for (const [id, n] of Object.entries(establishments)) {
+    const c = getCard(id);
+    if (c.type === 'establishment') counts.set(c.symbol, (counts.get(c.symbol) ?? 0) + n);
+  }
+  const shown = COUNTED_SYMBOLS.filter((s) => counts.get(s));
+  if (shown.length === 0) return null;
+  return (
+    <div className={`flex flex-wrap gap-1.5 ${className}`}>
+      {shown.map((s) => (
+        <span key={s} title={name(s)}
+          className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-black/10">
+          <span className="text-lg leading-none">{SYMBOL_ICON[s]}</span>{counts.get(s)}
+        </span>
+      ))}
     </div>
   );
 }

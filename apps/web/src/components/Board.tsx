@@ -3,8 +3,9 @@ import {
   buildBlocker, costOf, getEst, LANDMARKS_TO_WIN, MAX_MISSED_TURNS, SETUP_ROUNDS,
   type Action, type GameState, type PlayerState, type PublicGameState, type Row, type RoomView,
 } from '@mk2/game-engine';
-import { CardDetail, CardTile, cardIcon } from './Card';
-import { Button, Coin, DemoBadge, Modal } from './ui';
+import { CardDetail, CardTile, SymbolSummary } from './Card';
+import { Button, Coin, DemoBadge, Modal, ScrollRow } from './ui';
+import { isMuted, playDiceRoll, playYourTurn, setMuted } from '../sound';
 import { LangToggle, useI18n, type UiKey } from '../i18n';
 import type { ConnState } from '../net';
 
@@ -186,9 +187,15 @@ function Tableau({ p, onCard, compact }: { p: PlayerState; onCard: (id: string) 
       {est.length === 0 ? (
         <p className="px-2 py-3 text-sm text-slate-500">{u('no_establishments')}</p>
       ) : (
-        <div className={`flex gap-3 px-2 pb-3 pt-3 ${compact ? 'flex-wrap' : 'no-scrollbar overflow-x-auto'}`}>
-          {est.map(([id, n]) => <CardTile key={id} cardId={id} count={n} size="sm" onClick={() => onCard(id)} />)}
-        </div>
+        compact ? (
+          <div className="flex flex-wrap gap-3 px-2 pb-3 pt-3">
+            {est.map(([id, n]) => <CardTile key={id} cardId={id} count={n} size="sm" onClick={() => onCard(id)} />)}
+          </div>
+        ) : (
+          <ScrollRow className="px-2 pb-3 pt-3">
+            {est.map(([id, n]) => <CardTile key={id} cardId={id} count={n} size="sm" onClick={() => onCard(id)} />)}
+          </ScrollRow>
+        )
       )}
     </div>
   );
@@ -207,7 +214,7 @@ function Market({ g, me, interactive, onCard }: { g: PublicGameState; me: string
             <span className="font-semibold text-slate-700">{u(ROW_LABEL[row])}</span>
             <span className="text-xs text-slate-500">{u('deck_left', { n: g.deckCounts[row] })}</span>
           </div>
-          <div className="no-scrollbar -mx-1 flex gap-3 overflow-x-auto px-3 pb-3 pt-3">
+          <ScrollRow className="-mx-1 px-3 pb-3 pt-3">
             {g.market[row].map((m) => {
               const blocked = buildPhase ? buildBlocker(asState(g), me, m.cardId) : 'x';
               return (
@@ -218,7 +225,7 @@ function Market({ g, me, interactive, onCard }: { g: PublicGameState; me: string
               );
             })}
             {g.market[row].length === 0 && <span className="py-6 text-sm text-slate-400">{u('market_empty')}</span>}
-          </div>
+          </ScrollRow>
         </section>
       ))}
     </div>
@@ -363,6 +370,19 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
   const inMarket = cardModal ? g.market.low.concat(g.market.high, g.market.landmark).some((x) => x.cardId === cardModal) : false;
   const lastLog = g.log.at(-1);
 
+  // ---- sound effects
+  const [muted, setMutedState] = useState(isMuted);
+  const toggleMute = () => { setMuted(!muted); setMutedState(!muted); };
+  useEffect(() => {
+    if (reveal.stage === 'rolling') playDiceRoll(reveal.dice);
+  }, [reveal.stage]);
+  const myTurnKey = myTurn && (g.phase === 'roll' || g.phase === 'setup') ? `${g.turn}:${g.setupRound}:${g.activeIndex}` : null;
+  const prevTurnKey = useRef<string | null>(myTurnKey); // no chime for a turn already in progress on load
+  useEffect(() => {
+    if (myTurnKey && myTurnKey !== prevTurnKey.current) playYourTurn();
+    prevTurnKey.current = myTurnKey;
+  }, [myTurnKey]);
+
   return (
     <div className="mx-auto flex min-h-full max-w-[1400px] flex-col pb-28 lg:pb-4">
       {/* top bar */}
@@ -372,6 +392,10 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
           <div className="text-sm">{u('room')} <b className="tracking-widest">{room.code}</b></div>
           {room.deckMode === 'DEMO_ONLY' && <DemoBadge />}
           <LangToggle />
+          <button onClick={toggleMute} aria-pressed={muted} title={u(muted ? 'sound_on' : 'sound_off')}
+            className="rounded-full px-2 py-0.5 text-lg leading-none opacity-90 ring-1 ring-white/30 hover:opacity-100">
+            {muted ? '🔇' : '🔊'}
+          </button>
           {conn !== 'open' && <span className="rounded-full bg-amber-400 px-2 py-0.5 text-xs font-semibold text-amber-950">{u('reconnecting')}</span>}
           <div className="ml-auto flex items-center gap-3">
             <div className="text-right leading-tight">
@@ -399,6 +423,7 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
                 <h3 className="font-semibold text-slate-700">{u('my_city')}</h3>
                 <Coin n={meP.coins} bump />
               </div>
+              <SymbolSummary establishments={meP.establishments} className="mb-2 px-1" />
               <Tableau p={meP} onCard={setCardModal} />
             </section>
           )}
@@ -413,15 +438,13 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
                   <div className="mb-1 flex items-center justify-between text-sm">
                     <button className="font-medium hover:underline" onClick={() => setViewPlayer(p.id)}>{p.name}</button><Coin n={p.coins} />
                   </div>
-                  <div className="flex flex-wrap gap-1 text-lg">
-                    {p.landmarks.map((l) => (
-                      <button key={l} title={card(l)} onClick={() => setCardModal(l)}>{cardIcon(l)}</button>
-                    ))}
+                  <SymbolSummary establishments={p.establishments} className="mb-1" />
+                  <ScrollRow className="px-2 pb-2 pt-3">
+                    {p.landmarks.map((l) => <CardTile key={l} cardId={l} size="sm" onClick={() => setCardModal(l)} />)}
                     {sortedEstablishments(p).map(([id, n]) => (
-                      <button key={id} onClick={() => setCardModal(id)} title={card(id)}
-                        className="rounded-md bg-slate-100 px-1 text-sm">{cardIcon(id)}{n > 1 && <sub>{n}</sub>}</button>
+                      <CardTile key={id} cardId={id} count={n} size="sm" onClick={() => setCardModal(id)} />
                     ))}
-                  </div>
+                  </ScrollRow>
                 </div>
               ))}
             </div>
@@ -492,6 +515,7 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-xl font-bold">{u('city_of', { name: p.name })}</h3><Coin n={p.coins} />
               </div>
+              <SymbolSummary establishments={p.establishments} className="mb-2" />
               <Tableau p={p} compact onCard={(id) => { setViewPlayer(null); setCardModal(id); }} />
               {room.hostId === me && p.id !== me && g.phase !== 'ended' && room.players.find((x) => x.id === p.id)?.connected === false && (
                 <Button variant="secondary" className="mt-4 w-full text-rose-700"

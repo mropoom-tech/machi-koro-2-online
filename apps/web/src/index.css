@@ -58,3 +58,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* Visible, slim scrollbar for card rows */
+.mk-scroll { scrollbar-width: thin; scrollbar-color: rgb(15 118 110 / 0.45) transparent; }
+.mk-scroll::-webkit-scrollbar { height: 8px; }
+.mk-scroll::-webkit-scrollbar-thumb { background: rgb(15 118 110 / 0.45); border-radius: 9999px; }
+.mk-scroll::-webkit-scrollbar-track { background: transparent; }

@@ -221,7 +221,7 @@
     "nameEn": "Flower Shop",
     "nameTh": "ร้านดอกไม้",
     "color": "green",
-    "symbol": "flower",
+    "symbol": "combo",
     "tier": "low",
     "activation": [
       6
@@ -294,7 +294,7 @@
     "nameEn": "Furniture Factory",
     "nameTh": "โรงงานเฟอร์นิเจอร์",
     "color": "green",
-    "symbol": "gear",
+    "symbol": "combo",
     "tier": "high",
     "activation": [
       8
@@ -368,7 +368,7 @@
     "nameEn": "Winery",
     "nameTh": "โรงบ่มไวน์",
     "color": "green",
-    "symbol": "fruit",
+    "symbol": "combo",
     "tier": "high",
     "activation": [
       9
@@ -442,7 +442,7 @@
     "nameEn": "Food Warehouse",
     "nameTh": "คลังอาหาร",
     "color": "green",
-    "symbol": "cup",
+    "symbol": "combo",
     "tier": "high",
     "activation": [
       10,

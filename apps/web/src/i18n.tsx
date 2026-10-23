@@ -166,6 +166,8 @@ const UI = {
     en: '⚠️ The text printed on this card image is inaccurate — use the text below',
   },
   copies: { th: (p) => `${p.n} ใบ`, en: (p) => `${p.n} copies` },
+  sound_on: { th: 'เปิดเสียง', en: 'Sound on' },
+  sound_off: { th: 'ปิดเสียง', en: 'Mute' },
 } satisfies Record<string, Entry>;
 
 export type UiKey = keyof typeof UI;
@@ -173,7 +175,7 @@ export type UiKey = keyof typeof UI;
 const SYMBOL: Record<CardSymbol, { th: string; en: string }> = {
   cup: { th: 'ถ้วย', en: 'Cup' }, wheat: { th: 'รวงข้าว', en: 'Wheat' }, fruit: { th: 'ผลไม้', en: 'Fruit' },
   shop: { th: 'ร้านค้า', en: 'Shop' }, flower: { th: 'ดอกไม้', en: 'Flower' }, gear: { th: 'เฟือง', en: 'Gear' },
-  tower: { th: 'อาคารเสา', en: 'Major' },
+  tower: { th: 'อาคารเสา', en: 'Major' }, combo: { th: 'คอมโบ (ไม่มีสัญลักษณ์)', en: 'Combo (no symbol)' },
 };
 
 /** Thai card images whose printed text is wrong or incomplete (docs/CARD_IMAGE_PROOFREAD.md). */
