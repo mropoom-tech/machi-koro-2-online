@@ -1,17 +1,19 @@
 import { useState } from 'react';
-import { MAX_PLAYERS, MIN_PLAYERS, type RoomView } from '@mk2/game-engine';
+import { BOT_LEVELS, MAX_PLAYERS, MIN_PLAYERS, TURN_TIMER_OPTIONS, type BotLevel, type RoomView } from '@mk2/game-engine';
 import { Button, DemoBadge } from './ui';
 import { LangToggle, useI18n } from '../i18n';
 import { SoundSettings } from './SoundSettings';
+import { HowToPlayButton } from './HowToPlay';
 
-export function Lobby({ room, me, onStart, onLeave, onTransferHost, onKick, onAddBot, onSetSpectator }: {
+export function Lobby({ room, me, onStart, onLeave, onTransferHost, onKick, onAddBot, onSetSpectator, onSetTurnTimer }: {
   room: RoomView; me: string; onStart: () => void; onLeave: () => void;
   onTransferHost: (playerId: string) => void; onKick: (playerId: string) => void;
-  onAddBot: () => void; onSetSpectator: (spectator: boolean) => void;
+  onAddBot: (level: BotLevel) => void; onSetSpectator: (spectator: boolean) => void; onSetTurnTimer: (seconds: number) => void;
 }) {
   const { u } = useI18n();
   const [confirm, setConfirm] = useState<{ id: string; kind: 'host' | 'kick' } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [level, setLevel] = useState<BotLevel>('normal');
   const isHost = room.hostId === me;
   const link = `${location.origin}${location.pathname}#/room/${room.code}`;
   const copy = async () => {
@@ -28,7 +30,8 @@ export function Lobby({ room, me, onStart, onLeave, onTransferHost, onKick, onAd
       {p.isBot
         ? <span className="text-base leading-none" title={u('bot')}>🤖</span>
         : <span className={`h-2.5 w-2.5 rounded-full ${p.connected ? 'bg-emerald-500' : 'bg-slate-300'}`} title={u(p.connected ? 'online' : 'offline')} />}
-      <span className="flex-1 font-medium">{p.name}{p.id === me && <span className="text-slate-400"> ({u('you')})</span>}</span>
+      <span className="flex-1 font-medium">{p.name}{p.id === me && <span className="text-slate-400"> ({u('you')})</span>}
+        {p.botLevel && <span className="ml-1 text-xs text-slate-500">· {u(`lvl_${p.botLevel}`)}</span>}</span>
       {p.isHost && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">{u('host')}</span>}
       {isHost && !p.isHost && (
         confirm?.id === p.id ? (
@@ -62,6 +65,7 @@ export function Lobby({ room, me, onStart, onLeave, onTransferHost, onKick, onAd
           <h2 className="whitespace-nowrap text-2xl font-bold text-teal-900">{u('lobby_title')}</h2>
           <div className="flex items-center gap-2">
             {room.deckMode === 'DEMO_ONLY' && <DemoBadge />}
+            <HowToPlayButton className="bg-teal-800 text-white" />
             <LangToggle className="bg-teal-800 text-white" />
             <div className="rounded-full bg-teal-800 text-white"><SoundSettings align="right" /></div>
           </div>
@@ -80,10 +84,29 @@ export function Lobby({ room, me, onStart, onLeave, onTransferHost, onKick, onAd
           ))}
         </ul>
         <div className="mb-5 flex flex-wrap gap-2">
-          {isHost && !full && <Button variant="secondary" onClick={onAddBot} className="flex-1 text-sm">{u('add_bot')}</Button>}
+          {isHost && !full && (
+            <div className="flex flex-1 gap-1">
+              <select value={level} onChange={(e) => setLevel(e.target.value as BotLevel)} aria-label={u('bot_level')}
+                className="rounded-xl border border-slate-300 bg-white px-2 text-sm">
+                {BOT_LEVELS.map((l) => <option key={l} value={l}>{u(`lvl_${l}`)}</option>)}
+              </select>
+              <Button variant="secondary" onClick={() => onAddBot(level)} className="flex-1 text-sm">{u('add_bot')}</Button>
+            </div>
+          )}
           {meSpectating
             ? <Button variant="secondary" onClick={() => onSetSpectator(false)} disabled={full} className="flex-1 text-sm">{u('move_to_player')}</Button>
             : <Button variant="secondary" onClick={() => onSetSpectator(true)} className="flex-1 text-sm">{u('move_to_spectator')}</Button>}
+        </div>
+        <div className="mb-5 flex items-center justify-between gap-2 text-sm">
+          <span className="font-medium text-slate-600">⏱️ {u('turn_timer')}</span>
+          {isHost ? (
+            <select value={room.turnSeconds} onChange={(e) => onSetTurnTimer(Number(e.target.value))}
+              className="rounded-xl border border-slate-300 bg-white px-2 py-1">
+              {TURN_TIMER_OPTIONS.map((s) => <option key={s} value={s}>{s ? u('timer_s', { n: s }) : u('timer_off')}</option>)}
+            </select>
+          ) : (
+            <span>{room.turnSeconds ? u('timer_s', { n: room.turnSeconds }) : u('timer_off')}</span>
+          )}
         </div>
         {spectators.length > 0 && (
           <>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Action, CreateRoomResponse, JoinRoomResponse, MsgParams, RoomView, ServerMessage } from '@mk2/game-engine';
+import type { Action, BotLevel, CreateRoomResponse, JoinRoomResponse, MsgParams, RoomView, ServerMessage } from '@mk2/game-engine';
 import type { UiKey } from './i18n';
 
 export const API_URL: string = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://127.0.0.1:8787';
@@ -52,7 +52,8 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return data as T;
 }
 
-export const createRoom = (name: string) => post<CreateRoomResponse>('/api/rooms', { name });
+export const createRoom = (name: string, bots?: { bots: number; botLevel: BotLevel }) =>
+  post<CreateRoomResponse>('/api/rooms', { name, ...bots });
 export const joinRoom = (code: string, name: string, spectate = false) =>
   post<JoinRoomResponse>(`/api/rooms/${code}/join`, { name, spectate });
 
@@ -66,6 +67,7 @@ export function useRoom(session: Session | null) {
   const [fatal, setFatal] = useState<Note | null>(null);
   const [cardTicket, setCardTicket] = useState<string | null>(null);
   const [left, setLeft] = useState(false);
+  const [emotes, setEmotes] = useState<Record<string, { e: string; id: number }>>({});
   const wsRef = useRef<WebSocket | null>(null);
   const roomRef = useRef<RoomView | null>(null);
   roomRef.current = room;
@@ -89,6 +91,7 @@ export function useRoom(session: Session | null) {
         const m = JSON.parse(e.data) as ServerMessage;
         if (m.t === 'welcome') { attempt = 0; setConn('open'); setCardTicket(m.cardTicket); }
         else if (m.t === 'room') setRoom(m.room);
+        else if (m.t === 'emote') setEmotes((x) => ({ ...x, [m.playerId]: { e: m.e, id: Date.now() } }));
         else if (m.t === 'notice') setToast({ id: Date.now(), server: m.key, params: m.params });
         else if (m.t === 'error') {
           const note: Note = { id: Date.now(), server: m.code, params: m.params };
@@ -159,10 +162,15 @@ export function useRoom(session: Session | null) {
   const skipTurn = useCallback(() => send({ t: 'skip_turn' }), [send]);
   const forfeit = useCallback(() => send({ t: 'forfeit' }), [send]);
   const removePlayer = useCallback((playerId: string) => send({ t: 'remove_player', playerId }), [send]);
-  const addBot = useCallback(() => send({ t: 'add_bot' }), [send]);
+  const addBot = useCallback((level: BotLevel) => send({ t: 'add_bot', level }), [send]);
+  const replaceWithBot = useCallback((playerId: string) => send({ t: 'replace_with_bot', playerId }), [send]);
+  const setTurnTimer = useCallback((seconds: number) => send({ t: 'set_turn_timer', seconds }), [send]);
+  const emote = useCallback((e: string) => send({ t: 'emote', e }), [send]);
+  const rematch = useCallback(() => send({ t: 'rematch' }), [send]);
   const setSpectator = useCallback((spectator: boolean) => send({ t: 'set_spectator', spectator }), [send]);
 
-  return { room, conn, toast, fatal, left, cardTicket, act, start, leave, transferHost, kick, skipTurn, removePlayer, forfeit, addBot, setSpectator };
+  return { room, conn, toast, fatal, left, cardTicket, act, start, leave, transferHost, kick, skipTurn, removePlayer, forfeit, addBot, setSpectator,
+    replaceWithBot, setTurnTimer, emote, rematch, emotes };
 }
 
 /** URL of a (non-public) card image, readable only with this room's signed ticket. */

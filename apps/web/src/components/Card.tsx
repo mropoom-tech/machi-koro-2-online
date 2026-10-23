@@ -74,12 +74,14 @@ interface Props {
   cost?: number;
   dim?: boolean;
   highlight?: boolean;
+  /** activated by the current roll */
+  fired?: boolean;
   size?: 'sm' | 'md';
   onClick?: () => void;
 }
 
 /** A card in the market or a tableau: card art when available, otherwise a tile drawn from data. */
-export function CardTile({ cardId, count, cost, dim, highlight, size = 'md', onClick }: Props) {
+export function CardTile({ cardId, count, cost, dim, highlight, fired, size = 'md', onClick }: Props) {
   const c = getCard(cardId);
   const col = colorClasses(c);
   const { card, u } = useI18n();
@@ -92,7 +94,7 @@ export function CardTile({ cardId, count, cost, dim, highlight, size = 'md', onC
       type="button"
       onClick={onClick}
       className={`relative ${w} shrink-0 rounded-xl bg-white text-left shadow-md transition
-        hover:-translate-y-0.5 hover:shadow-lg active:scale-95 ${dim ? 'opacity-45 saturate-50' : ''} ${highlight ? 'ring-[3px] ring-amber-400' : 'ring-1 ring-black/5'}`}
+        hover:-translate-y-0.5 hover:shadow-lg active:scale-95 ${dim ? 'opacity-45 saturate-50' : ''} ${highlight ? 'ring-[3px] ring-amber-400' : fired ? 'ring-[3px] ring-emerald-500' : 'ring-1 ring-black/5'}`}
       aria-label={`${card(cardId)}${count && count > 1 ? ` ${u('copies', { n: count })}` : ''}`}
     >
       {img ? (

@@ -90,6 +90,10 @@ const CATALOG: Record<string, { th: Template; en: Template }> = {
     th: (p) => `⏭️ ข้ามเทิร์นของ ${p.p} (หลุดการเชื่อมต่อ)`,
     en: (p) => `⏭️ Skipped ${p.p}'s turn (disconnected)`,
   },
+  skip_turn_timeout: {
+    th: (p) => `⏱️ ข้ามเทิร์นของ ${p.p} (หมดเวลา)`,
+    en: (p) => `⏱️ Skipped ${p.p}'s turn (out of time)`,
+  },
   player_forfeit: {
     th: (p) => `🏳️ ${p.p} ยอมแพ้ — การ์ดทั้งหมดออกจากเกม เหรียญคืนธนาคาร`,
     en: (p) => `🏳️ ${p.p} forfeits — their cards leave the game and coins return to the bank`,
@@ -106,6 +110,8 @@ const CATALOG: Record<string, { th: Template; en: Template }> = {
   },
   why_auto: { th: () => 'หัวห้องเดิมหลุดการเชื่อมต่อ', en: () => 'previous host disconnected' },
   why_left: { th: () => 'หัวห้องเดิมออกจากห้อง', en: () => 'previous host left' },
+  n_replaced_bot: { th: (p) => `บอทเข้ามาเล่นแทน ${p.p}`, en: (p) => `A bot took over for ${p.p}` },
+  n_rematch: { th: () => 'เริ่มรอบใหม่ — กลับมาที่ห้องรอเล่น', en: () => 'New round — back to the lobby' },
   n_kicked: { th: (p) => `${p.p} ถูกเชิญออกจากห้อง`, en: (p) => `${p.p} was removed from the room` },
   n_forfeit: { th: (p) => `🏳️ ${p.p} ยอมแพ้และออกจากเกม`, en: (p) => `🏳️ ${p.p} forfeited and left the game` },
   n_removed: {
@@ -146,6 +152,9 @@ const CATALOG: Record<string, { th: Template; en: Template }> = {
   err_seat_lobby_only: { th: () => 'สลับไปเล่น/ไปดูได้เฉพาะก่อนเริ่มเกม', en: () => 'You can only switch seats before the game starts' },
   err_host_only_bot: { th: () => 'เฉพาะหัวห้องที่เพิ่มบอทได้', en: () => 'Only the host can add bots' },
   err_spectator_only_watch: { th: () => 'ผู้ชมทำได้แค่ดูเกม', en: () => 'Spectators can only watch' },
+  err_host_only: { th: () => 'เฉพาะหัวห้องที่ทำได้', en: () => 'Only the host can do that' },
+  err_replace_offline_only: { th: () => 'แทนด้วยบอทได้เฉพาะผู้เล่นที่หลุด', en: () => 'Only a disconnected player can be replaced by a bot' },
+  err_rematch_ended_only: { th: () => 'เล่นอีกรอบได้หลังเกมจบ', en: () => 'You can play again once the game is over' },
   err_room_full: { th: (p) => `ห้องเต็มแล้ว (สูงสุด ${p.max} คน)`, en: (p) => `Room is full (max ${p.max})` },
   err_name_taken: { th: () => 'มีผู้เล่นใช้ชื่อนี้แล้ว', en: () => 'That nickname is taken' },
   err_rate: { th: () => 'ส่งคำสั่งเร็วเกินไป', en: () => 'Too many actions, slow down' },

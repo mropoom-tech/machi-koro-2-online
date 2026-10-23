@@ -45,6 +45,19 @@ body {
 }
 .turn-glow { animation: pulse-ring 1.6s ease-in-out infinite; }
 
+@keyframes float-up {
+  0% { opacity: 0; transform: translate(-50%, 4px); }
+  15% { opacity: 1; transform: translate(-50%, -6px); }
+  100% { opacity: 0; transform: translate(-50%, -30px); }
+}
+.float-up { animation: float-up 1.8s ease-out both; }
+@keyframes bubble {
+  0% { opacity: 0; transform: scale(0.6); }
+  10%, 85% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+.emote-bubble { animation: bubble 3s ease-out both; }
+
 @keyframes coin-bump {
   0% { transform: scale(1); }
   40% { transform: scale(1.35); }

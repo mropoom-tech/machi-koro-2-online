@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  buildBlocker, costOf, getEst, LANDMARKS_TO_WIN, MAX_MISSED_TURNS, SETUP_ROUNDS,
+  buildBlocker, costOf, EMOTES, getEst, LANDMARKS_TO_WIN, MAX_MISSED_TURNS, SETUP_ROUNDS,
   type Action, type GameState, type PlayerState, type PublicGameState, type Row, type RoomView,
 } from '@mk2/game-engine';
 import { CardDetail, CardTile, SymbolSummary } from './Card';
@@ -9,6 +9,8 @@ import { playBuild, playCoin, playDiceRoll, playGameOver, playLandmark, playVict
 import { SoundSettings } from './SoundSettings';
 import { LangToggle, useI18n, type UiKey } from '../i18n';
 import type { ConnState } from '../net';
+import { HowToPlayButton } from './HowToPlay';
+import { GameSummary } from './Summary';
 
 const ROW_LABEL: Record<Row, UiKey> = { low: 'row_low', high: 'row_high', landmark: 'row_landmark' };
 // pip positions on a 3x3 grid (0..8) for faces 1..6
@@ -143,16 +145,24 @@ function usePhaseLabel() {
   };
 }
 
-function PlayerChip({ p, g, room, me, onClick }: { p: PlayerState; g: PublicGameState; room: RoomView; me: string; onClick: () => void }) {
+function PlayerChip({ p, g, room, me, delta, emote, onClick }: {
+  p: PlayerState; g: PublicGameState; room: RoomView; me: string;
+  delta?: { n: number; id: number }; emote?: { e: string; id: number }; onClick: () => void;
+}) {
   const { u } = useI18n();
   const isActive = g.players[g.activeIndex]?.id === p.id;
   const lp = room.players.find((x) => x.id === p.id);
   return (
     <button onClick={onClick}
-      className={`flex min-w-[140px] shrink-0 items-center gap-2 rounded-2xl px-3 py-2 text-left shadow-sm ring-1 transition
+      className={`relative flex min-w-[140px] shrink-0 items-center gap-2 rounded-2xl px-3 py-2 text-left shadow-sm ring-1 transition
         ${isActive ? 'turn-glow bg-amber-50 ring-amber-400' : 'bg-white ring-black/5'} hover:shadow-md`}>
+      {delta && (
+        <span key={delta.id} className={`float-up pointer-events-none absolute left-1/2 top-0 rounded-full px-2 text-sm font-bold shadow
+          ${delta.n > 0 ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>{delta.n > 0 ? `+${delta.n}` : delta.n} 🪙</span>
+      )}
+      {emote && <span key={emote.id} className="emote-bubble pointer-events-none absolute -top-2 right-1 text-2xl drop-shadow">{emote.e}</span>}
       <div className="relative">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-700 text-sm font-bold text-white">{p.name.slice(0, 2)}</div>
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-700 text-sm font-bold text-white">{lp?.isBot ? '🤖' : p.name.slice(0, 2)}</div>
         <span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full ring-2 ring-white ${lp?.connected ? 'bg-emerald-500' : 'bg-slate-300'}`}
           title={u(lp?.connected ? 'online' : 'offline')} />
       </div>
@@ -168,7 +178,7 @@ function PlayerChip({ p, g, room, me, onClick }: { p: PlayerState; g: PublicGame
   );
 }
 
-function Tableau({ p, onCard, compact }: { p: PlayerState; onCard: (id: string) => void; compact?: boolean }) {
+function Tableau({ p, onCard, compact, fired }: { p: PlayerState; onCard: (id: string) => void; compact?: boolean; fired?: number }) {
   const { u } = useI18n();
   const est = sortedEstablishments(p);
   return (
@@ -190,11 +200,11 @@ function Tableau({ p, onCard, compact }: { p: PlayerState; onCard: (id: string) 
       ) : (
         compact ? (
           <div className="flex flex-wrap gap-3 px-2 pb-3 pt-3">
-            {est.map(([id, n]) => <CardTile key={id} cardId={id} count={n} size="sm" onClick={() => onCard(id)} />)}
+            {est.map(([id, n]) => <CardTile key={id} cardId={id} count={n} size="sm" fired={!!fired && getEst(id).activation.includes(fired)} onClick={() => onCard(id)} />)}
           </div>
         ) : (
           <ScrollRow className="px-2 pb-3 pt-3">
-            {est.map(([id, n]) => <CardTile key={id} cardId={id} count={n} size="sm" onClick={() => onCard(id)} />)}
+            {est.map(([id, n]) => <CardTile key={id} cardId={id} count={n} size="sm" fired={!!fired && getEst(id).activation.includes(fired)} onClick={() => onCard(id)} />)}
           </ScrollRow>
         )
       )}
@@ -312,7 +322,9 @@ function ChoicePanel({ g, me, act }: { g: PublicGameState; me: string; act: (a: 
 // ------------------------------------------------------------------ board
 
 /** Shown to everyone while the player whose turn it is is disconnected. */
-function OfflineBanner({ room, me, onSkip, onRemove }: { room: RoomView; me: string; onSkip: () => void; onRemove: (id: string) => void }) {
+function OfflineBanner({ room, me, onSkip, onRemove, onReplaceBot }: {
+  room: RoomView; me: string; onSkip: () => void; onRemove: (id: string) => void; onReplaceBot: (id: string) => void;
+}) {
   const { u } = useI18n();
   const g = room.game!;
   const active = g.players[g.activeIndex];
@@ -337,7 +349,8 @@ function OfflineBanner({ room, me, onSkip, onRemove }: { room: RoomView; me: str
         <span className="block text-xs text-amber-800/80">{u('missed_info', { n: lp?.missedTurns ?? 0, max: MAX_MISSED_TURNS })}</span>
       </p>
       {room.hostId === me && (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => onReplaceBot(active.id)} className="py-1.5 text-sm">{u('replace_bot')}</Button>
           <Button variant="secondary" onClick={() => onRemove(active.id)} className="py-1.5 text-sm text-rose-700">{u('remove_from_game')}</Button>
           <Button variant="gold" onClick={onSkip} className="py-1.5 text-sm">{u('skip_now')}</Button>
         </div>
@@ -346,9 +359,29 @@ function OfflineBanner({ room, me, onSkip, onRemove }: { room: RoomView; me: str
   );
 }
 
-export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer }: {
+/** Seconds left on the turn timer, using server time. */
+function TurnTimer({ room }: { room: RoomView }) {
+  const { u } = useI18n();
+  const [offset] = useState(() => room.serverNow - Date.now());
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!room.turnDeadline) return;
+    const t = setInterval(() => setNow(Date.now()), 500);
+    return () => clearInterval(t);
+  }, [room.turnDeadline]);
+  if (!room.turnDeadline) return null;
+  const left = Math.max(0, Math.ceil((room.turnDeadline - (now + offset)) / 1000));
+  return (
+    <span className={`rounded-full px-2.5 py-0.5 text-sm font-semibold tabular-nums ${left <= 10 ? 'bg-rose-500 text-white' : 'bg-white/20'}`}>
+      {u('timer_left', { n: left })}
+    </span>
+  );
+}
+
+export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer, onReplaceBot, onEmote, onRematch, emotes }: {
   room: RoomView; me: string; conn: ConnState; act: (a: Action) => void; onLeave: () => void;
-  onSkipTurn: () => void; onRemovePlayer: (playerId: string) => void;
+  onSkipTurn: () => void; onRemovePlayer: (playerId: string) => void; onReplaceBot: (playerId: string) => void;
+  onEmote: (e: string) => void; onRematch: () => void; emotes: Record<string, { e: string; id: number }>;
 }) {
   const { u, m, card } = useI18n();
   const phaseLabel = usePhaseLabel();
@@ -360,6 +393,7 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
   const [logOpen, setLogOpen] = useState(false);
   const [resultHidden, setResultHidden] = useState(false); // victory screen dismissed to look at the board
   const [overviewOpen, setOverviewOpen] = useState(false);
+  const [emoteOpen, setEmoteOpen] = useState(false);
   const active = g.players[g.activeIndex];
   const myTurn = active.id === me && !revealing;
   const meP = g.players.find((p) => p.id === me);
@@ -398,6 +432,33 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
     prevWinner.current = winnerId;
   }, [winnerId]);
 
+  // Floating +/- coin changes on each player's chip, once the roll's result is shown.
+  const [deltas, setDeltas] = useState<Record<string, { n: number; id: number }>>({});
+  const coinsKey = g.players.map((p) => `${p.id}:${p.coins}`).join(',');
+  const prevCoinMap = useRef<Record<string, number> | null>(null);
+  useEffect(() => {
+    const cur = Object.fromEntries(g.players.map((p) => [p.id, p.coins]));
+    const prev = prevCoinMap.current;
+    prevCoinMap.current = cur;
+    if (!prev) return;
+    const id = Date.now();
+    const next: Record<string, { n: number; id: number }> = {};
+    for (const [pid, c] of Object.entries(cur)) if (pid in prev && c !== prev[pid]) next[pid] = { n: c - prev[pid], id };
+    if (Object.keys(next).length === 0) return;
+    setDeltas((d) => ({ ...d, ...next }));
+    const t = setTimeout(() => setDeltas((d) => Object.fromEntries(Object.entries(d).filter(([, v]) => v.id !== id))), 1900);
+    return () => clearTimeout(t);
+  }, [coinsKey]);
+  // Emote bubbles fade on their own; drop them from view after 3 s.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setTick((n) => n + 1), 3100);
+    return () => clearTimeout(t);
+  }, [emotes]);
+  const liveEmote = (pid: string) => (emotes[pid] && Date.now() - emotes[pid].id < 3000 ? emotes[pid] : undefined);
+  const spectatorEmotes = room.players.filter((p) => p.spectator && liveEmote(p.id));
+  const fired = reveal.stage === 'rolling' ? undefined : g.lastRoll?.total;
+
   // Coin sound when *my* displayed coins go up (after the dice reveal, so it lines up with the number).
   const myCoins = meP?.coins ?? 0;
   const prevCoins = useRef(myCoins);
@@ -422,6 +483,7 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
           {room.deckMode === 'DEMO_ONLY' && <DemoBadge />}
           <LangToggle />
           <SoundSettings />
+          <HowToPlayButton className="bg-white/80 text-slate-700 ring-1 ring-black/10 hover:bg-white" />
           {!g.players.some((p) => p.id === me) && (
             <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-semibold text-sky-800">{u('spectating')}</span>
           )}
@@ -430,6 +492,7 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
             🏙️ <span className="hidden sm:inline">{u('all_cities')}</span>
           </button>
           {conn !== 'open' && <span className="rounded-full bg-amber-400 px-2 py-0.5 text-xs font-semibold text-amber-950">{u('reconnecting')}</span>}
+          <TurnTimer key={`${room.version}:${room.serverNow}`} room={room} />
           <div className="ml-auto flex items-center gap-3">
             <div className="text-right leading-tight">
               <div className="text-xs opacity-80">{revealing ? u('phase_rolling') : phaseLabel(g)} · {u('turn_n', { n: g.turn })}</div>
@@ -442,10 +505,15 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
 
       {/* player strip */}
       <div className="no-scrollbar flex gap-2 overflow-x-auto px-3 py-3 sm:px-4">
-        {ordered.map((p) => <PlayerChip key={p.id} p={p} g={g} room={room} me={me} onClick={() => setViewPlayer(p.id)} />)}
+        {ordered.map((p) => <PlayerChip key={p.id} p={p} g={g} room={room} me={me} delta={deltas[p.id]} emote={liveEmote(p.id)} onClick={() => setViewPlayer(p.id)} />)}
+        {spectatorEmotes.map((p) => (
+          <span key={p.id} className="emote-bubble flex shrink-0 items-center gap-1 self-center rounded-full bg-white/90 px-3 py-1 text-sm shadow">
+            👁️ {p.name} <span className="text-xl">{emotes[p.id].e}</span>
+          </span>
+        ))}
       </div>
 
-      <OfflineBanner key={`${room.version}:${room.serverNow}`} room={room} me={me} onSkip={onSkipTurn} onRemove={setConfirmRemove} />
+      <OfflineBanner key={`${room.version}:${room.serverNow}`} room={room} me={me} onSkip={onSkipTurn} onRemove={setConfirmRemove} onReplaceBot={onReplaceBot} />
 
       <div className="grid flex-1 gap-4 px-3 sm:px-4 lg:grid-cols-[1fr_340px]">
         <main className="min-w-0 space-y-4">
@@ -457,7 +525,7 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
                 <Coin n={meP.coins} bump />
               </div>
               <SymbolSummary establishments={meP.establishments} className="mb-2 px-1" />
-              <Tableau p={meP} onCard={setCardModal} />
+              <Tableau p={meP} onCard={setCardModal} fired={fired} />
             </section>
           )}
         </main>
@@ -475,7 +543,7 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
                   <ScrollRow className="px-2 pb-2 pt-3">
                     {p.landmarks.map((l) => <CardTile key={l} cardId={l} size="sm" onClick={() => setCardModal(l)} />)}
                     {sortedEstablishments(p).map(([id, n]) => (
-                      <CardTile key={id} cardId={id} count={n} size="sm" onClick={() => setCardModal(id)} />
+                      <CardTile key={id} cardId={id} count={n} size="sm" fired={!!fired && getEst(id).activation.includes(fired)} onClick={() => setCardModal(id)} />
                     ))}
                   </ScrollRow>
                 </div>
@@ -495,7 +563,16 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
         <button onClick={() => setLogOpen(true)} className="block w-full truncate px-4 pt-2 text-left text-xs text-slate-500 lg:hidden">
           📜 {lastLog && m(lastLog.key, lastLog.params)}
         </button>
-        <div className="flex items-center gap-2 px-3 py-3 sm:px-4">
+        <div className="relative flex items-center gap-2 px-3 py-3 sm:px-4">
+          <button onClick={() => setEmoteOpen((o) => !o)} aria-label={u('emote')} title={u('emote')}
+            className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1.5 text-xl hover:bg-slate-200">😀</button>
+          {emoteOpen && (
+            <div className="pop-in absolute bottom-full left-3 mb-2 flex gap-1 rounded-2xl bg-white p-2 shadow-xl ring-1 ring-black/10">
+              {EMOTES.map((e) => (
+                <button key={e} onClick={() => { onEmote(e); setEmoteOpen(false); }} className="rounded-lg p-1.5 text-2xl hover:bg-slate-100">{e}</button>
+              ))}
+            </div>
+          )}
           {revealing && <p className="flex-1 font-semibold text-teal-800">🎲 {u('phase_rolling')}</p>}
           {!revealing && active.id !== me && g.phase !== 'ended' && (
             <p className="flex-1 text-slate-600">{u('waiting_for', { name: active.name, phase: phaseLabel(g) })}</p>
@@ -576,10 +653,13 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
               <SymbolSummary establishments={p.establishments} className="mb-2" />
               <Tableau p={p} compact onCard={(id) => { setViewPlayer(null); setCardModal(id); }} />
               {room.hostId === me && p.id !== me && g.phase !== 'ended' && room.players.find((x) => x.id === p.id)?.connected === false && (
-                <Button variant="secondary" className="mt-4 w-full text-rose-700"
-                  onClick={() => { setViewPlayer(null); setConfirmRemove(p.id); }}>
-                  {u('remove_x', { name: p.name })}
-                </Button>
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  <Button variant="secondary" onClick={() => { setViewPlayer(null); onReplaceBot(p.id); }}>{u('replace_bot')}</Button>
+                  <Button variant="secondary" className="text-rose-700"
+                    onClick={() => { setViewPlayer(null); setConfirmRemove(p.id); }}>
+                    {u('remove_x', { name: p.name })}
+                  </Button>
+                </div>
               )}
             </>
           );
@@ -611,7 +691,7 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
 
       {winner && !resultHidden && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur">
-          <div className="pop-in w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-2xl">
+          <div className="pop-in max-h-[92vh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-6 text-center shadow-2xl">
             <div className="text-7xl">🏆</div>
             <h2 className="mt-2 text-3xl font-bold text-amber-600">{winner.id === me ? u('you_win') : u('x_wins', { name: winner.name })}</h2>
             <p className="mt-1 text-slate-600">{lastLog && m(lastLog.key, lastLog.params)}</p>
@@ -624,8 +704,12 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
                 </li>
               ))}
             </ul>
+            <div className="mb-5"><GameSummary g={g} me={me} /></div>
+            {room.hostId === me
+              ? <Button variant="gold" onClick={onRematch} className="mb-2 w-full">{u('play_again')}</Button>
+              : <p className="mb-2 rounded-xl bg-slate-100 p-2 text-sm text-slate-600">{u('wait_rematch')}</p>}
             <div className="grid gap-2 sm:grid-cols-2">
-              <Button variant="gold" onClick={() => { setResultHidden(true); setOverviewOpen(true); }}>🔍 {u('view_details')}</Button>
+              <Button variant="secondary" onClick={() => { setResultHidden(true); setOverviewOpen(true); }}>🔍 {u('view_details')}</Button>
               <Button onClick={onLeave}>{u('back_home')}</Button>
             </div>
           </div>

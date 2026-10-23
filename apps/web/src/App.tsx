@@ -45,7 +45,8 @@ export default function App() {
 function RoomScreen({ session, onLeave }: { session: Session; onLeave: () => void }) {
   const { u } = useI18n();
   const noteText = useNoteText();
-  const { room, conn, toast, fatal, left, cardTicket, act, start, leave, transferHost, kick, skipTurn, removePlayer, forfeit, addBot, setSpectator } = useRoom(session);
+  const { room, conn, toast, fatal, left, cardTicket, act, start, leave, transferHost, kick, skipTurn, removePlayer, forfeit, addBot, setSpectator,
+    replaceWithBot, setTurnTimer, emote, rematch, emotes } = useRoom(session);
   const spectating = !!room?.players.find((p) => p.id === session.playerId)?.spectator;
   const [confirmForfeit, setConfirmForfeit] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
@@ -56,6 +57,16 @@ function RoomScreen({ session, onLeave }: { session: Session; onLeave: () => voi
     if (!room || room.status === 'lobby' || spectating) clearSession(session.code);
     onLeave();
   }, [left]);
+
+  // "Play bots" from the landing page: start as soon as the room is ready.
+  useEffect(() => {
+    if (conn !== 'open' || room?.status !== 'lobby') return;
+    let flag: string | null = null;
+    try { flag = sessionStorage.getItem('mk2:autostart'); } catch { /* storage blocked */ }
+    if (flag !== session.code) return;
+    try { sessionStorage.removeItem('mk2:autostart'); } catch { /* ignore */ }
+    start();
+  }, [conn, room?.status]);
 
   const requestLeave = () => {
     if (conn !== 'open') { onLeave(); return; }
@@ -86,8 +97,9 @@ function RoomScreen({ session, onLeave }: { session: Session; onLeave: () => voi
       <Toast toast={toast} />
       {room.status === 'lobby' || !room.game
         ? <Lobby room={room} me={session.playerId} onStart={start} onLeave={requestLeave} onTransferHost={transferHost} onKick={kick}
-            onAddBot={addBot} onSetSpectator={setSpectator} />
-        : <Board room={room} me={session.playerId} conn={conn} act={act} onSkipTurn={skipTurn} onRemovePlayer={removePlayer} onLeave={room.status === 'ended' ? onLeave : requestLeave} />}
+            onAddBot={addBot} onSetSpectator={setSpectator} onSetTurnTimer={setTurnTimer} />
+        : <Board room={room} me={session.playerId} conn={conn} act={act} onSkipTurn={skipTurn} onRemovePlayer={removePlayer}
+            onReplaceBot={replaceWithBot} onEmote={emote} onRematch={rematch} emotes={emotes} onLeave={room.status === 'ended' ? onLeave : requestLeave} />}
       <Modal open={confirmLeave} onClose={() => { setConfirmLeave(false); setConfirmForfeit(false); }}>
         {!confirmForfeit ? (
           <>

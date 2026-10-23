@@ -1,12 +1,12 @@
 import { DurableObject } from 'cloudflare:workers';
 import {
-  applyAction, botAction, createGame, DEMO_DECK, forceSkipTurn, removePlayer, MAX_MISSED_TURNS, MAX_PLAYERS, MAX_SPECTATORS, MIN_PLAYERS, parseClientMessage, sanitizeName, toPublic, verifiedDeck,
-  type DeckManifest, type GameState, type MsgParams, type RoomView, type ServerMessage,
+  applyAction, botAction, createGame, DEMO_DECK, forceSkipTurn, removePlayer, MAX_MISSED_TURNS, MAX_PLAYERS, MAX_SPECTATORS, MIN_PLAYERS, BOT_LEVELS, parseClientMessage, sanitizeName, toPublic, verifiedDeck,
+  type BotLevel, type DeckManifest, type GameState, type MsgParams, type RoomView, type ServerMessage,
 } from '@mk2/game-engine';
 import type { Env } from './index';
 import { issueCardTicket } from './tickets';
 
-interface StoredPlayer { id: string; name: string; tokenHash: string; bot?: boolean; spectator?: boolean }
+interface StoredPlayer { id: string; name: string; tokenHash: string; bot?: boolean; botLevel?: BotLevel; spectator?: boolean }
 interface Meta {
   code: string; hostId: string; status: RoomView['status']; version: number; createdAt: number;
   expiresAt?: number;
@@ -20,6 +20,8 @@ interface Meta {
   turnStartedAt?: number;
   /** when the active bot makes its next move */
   botAt?: number | null;
+  /** seconds per turn, 0 = no limit */
+  turnSeconds?: number;
 }
 interface Attachment { playerId: string | null }
 
@@ -50,6 +52,7 @@ export class GameRoom extends DurableObject<Env> {
   // in-memory only; resets when the object hibernates, which is acceptable for a soft rate limit
   private closing: WebSocket | null = null;
   private rate = new Map<WebSocket, { tokens: number; at: number }>();
+  private lastEmote = new Map<string, number>();
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -87,6 +90,8 @@ export class GameRoom extends DurableObject<Env> {
     const skipAt = this.autoSkipAt();
     if (skipAt) times.push(skipAt);
     if (this.meta.botAt) times.push(this.meta.botAt);
+    const deadline = this.turnDeadline();
+    if (deadline) times.push(deadline);
     await this.ctx.storage.setAlarm(Math.min(...times));
   }
 
@@ -102,10 +107,26 @@ export class GameRoom extends DurableObject<Env> {
     return Math.max(since, this.meta!.turnStartedAt ?? 0) + AUTO_SKIP_MS;
   }
 
-  private async skipActive() {
+  /** When a seated human's turn runs out (only with a turn timer set). */
+  private turnDeadline(): number | null {
+    const m = this.meta;
+    if (!m?.turnSeconds || m.status !== 'playing' || !this.game) return null;
+    const id = this.game.players[this.game.activeIndex]?.id;
+    if (!id || this.players.find((p) => p.id === id)?.bot) return null;
+    return (m.turnStartedAt ?? Date.now()) + m.turnSeconds * 1000;
+  }
+
+  private async skipActive(timedOut = false) {
     const pid = this.game!.players[this.game!.activeIndex].id;
-    this.game = forceSkipTurn(this.game!);
+    this.game = forceSkipTurn(this.game!, timedOut ? 'timeout' : 'offline');
     const m = this.meta!;
+    if (timedOut) {
+      // A slow player is not a missing one: no strike toward removal.
+      m.version++;
+      await this.persist();
+      this.broadcastRoom();
+      return;
+    }
     m.skipStreak = { ...m.skipStreak, [pid]: (m.skipStreak?.[pid] ?? 0) + 1 };
     m.version++;
     if (m.skipStreak[pid] >= MAX_MISSED_TURNS) {
@@ -149,6 +170,8 @@ export class GameRoom extends DurableObject<Env> {
     const now = Date.now();
     if (now >= (this.meta.expiresAt ?? 0)) return this.wipe(); // expired from inactivity
     if (this.meta.botAt && now >= this.meta.botAt) return this.botMove();
+    const deadline = this.turnDeadline();
+    if (deadline && now >= deadline) return this.skipActive(true);
     const skipAt = this.autoSkipAt();
     if (skipAt && now >= skipAt) {
       await this.skipActive();
@@ -173,7 +196,8 @@ export class GameRoom extends DurableObject<Env> {
   private async botMove() {
     const g = this.game;
     if (!g || this.meta!.status !== 'playing') { this.meta!.botAt = null; return this.scheduleAlarm(); }
-    const r = applyAction(g, g.players[g.activeIndex].id, botAction(g));
+    const id = g.players[g.activeIndex].id;
+    const r = applyAction(g, id, botAction(g, this.players.find((p) => p.id === id)?.botLevel ?? 'normal'));
     this.game = r.ok ? r.state : forceSkipTurn(g);
     if (this.game.phase === 'ended') this.meta!.status = 'ended';
     this.meta!.version++;
@@ -214,6 +238,13 @@ export class GameRoom extends DurableObject<Env> {
     return verifiedDeck() ?? DEMO_DECK;
   }
 
+  private addBot(level: BotLevel) {
+    let n = 1;
+    while (this.players.some((p) => p.name === `Bot ${n}`)) n++;
+    // Bots have no token: the empty hash never matches a real one.
+    this.players.push({ id: randomHex(6), name: `Bot ${n}`, tokenHash: '', bot: true, botLevel: level });
+  }
+
   private async addPlayer(name: string, spectator = false): Promise<{ token: string; playerId: string }> {
     const token = randomHex(16); // 128-bit bearer secret; only its hash is stored
     const playerId = randomHex(6);
@@ -227,9 +258,14 @@ export class GameRoom extends DurableObject<Env> {
 
     if (url.pathname === '/create' && req.method === 'POST') {
       if (this.meta) return json({ error: 'exists' }, 409);
-      const name = sanitizeName(((await req.json()) as any)?.name);
+      const body = (await req.json()) as any;
+      const name = sanitizeName(body?.name);
       if (!name) return json({ error: 'err_need_name' }, 400);
       const { token, playerId } = await this.addPlayer(name);
+      // "Play with bots": the room starts with bots already seated.
+      const bots = Number.isInteger(body?.bots) ? Math.min(Math.max(body.bots, 0), MAX_PLAYERS - 1) : 0;
+      const level: BotLevel = BOT_LEVELS.includes(body?.botLevel) ? body.botLevel : 'normal';
+      for (let i = 0; i < bots; i++) this.addBot(level);
       this.meta = { code, hostId: playerId, status: 'lobby', version: 1, createdAt: Date.now() };
       await this.persist();
       return json({ code, token, playerId });
@@ -295,10 +331,12 @@ export class GameRoom extends DurableObject<Env> {
       version: m.version,
       deckMode: this.game?.deckMode ?? this.deck().mode,
       autoSkipAt: this.autoSkipAt(),
+      turnSeconds: m.turnSeconds ?? 0,
+      turnDeadline: this.turnDeadline(),
       serverNow: Date.now(),
       players: this.players.map((p) => ({
         id: p.id, name: p.name, connected: !!p.bot || online.has(p.id), isHost: p.id === m.hostId,
-        missedTurns: m.skipStreak?.[p.id] ?? 0, isBot: !!p.bot, spectator: !!p.spectator,
+        missedTurns: m.skipStreak?.[p.id] ?? 0, isBot: !!p.bot, botLevel: p.bot ? p.botLevel ?? 'normal' : null, spectator: !!p.spectator,
       })),
       game: this.game ? toPublic(this.game) : null,
     };
@@ -371,11 +409,61 @@ export class GameRoom extends DurableObject<Env> {
       if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', code: 'err_host_only_bot' });
       if (this.meta.status !== 'lobby') return this.send(ws, { t: 'error', code: 'err_already_started' });
       if (this.seated().length >= MAX_PLAYERS) return this.send(ws, { t: 'error', code: 'err_room_full', params: { max: MAX_PLAYERS } });
-      let n = 1;
-      while (this.players.some((p) => p.name === `Bot ${n}`)) n++;
-      // Bots have no token: the empty hash never matches a real one.
-      this.players.push({ id: randomHex(6), name: `Bot ${n}`, tokenHash: '', bot: true });
+      this.addBot(msg.level);
       this.meta.version++;
+      await this.persist();
+      this.broadcastRoom();
+      return;
+    }
+
+    if (msg.t === 'emote') {
+      const now = Date.now();
+      if (now - (this.lastEmote.get(playerId) ?? 0) < 1500) return;
+      this.lastEmote.set(playerId, now);
+      const data = JSON.stringify({ t: 'emote', playerId, e: msg.e } satisfies ServerMessage);
+      for (const s of this.ctx.getWebSockets()) {
+        if ((s.deserializeAttachment() as Attachment | null)?.playerId) try { s.send(data); } catch { /* ignore */ }
+      }
+      return;
+    }
+
+    if (msg.t === 'set_turn_timer') {
+      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', code: 'err_host_only' });
+      if (this.meta.status !== 'lobby') return this.send(ws, { t: 'error', code: 'err_already_started' });
+      this.meta.turnSeconds = msg.seconds;
+      this.meta.version++;
+      await this.persist();
+      this.broadcastRoom();
+      return;
+    }
+
+    if (msg.t === 'rematch') {
+      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', code: 'err_host_only' });
+      if (this.meta.status !== 'ended') return this.send(ws, { t: 'error', code: 'err_rematch_ended_only' });
+      this.game = null;
+      this.meta.status = 'lobby';
+      this.meta.skipStreak = {};
+      this.meta.turnKey = undefined;
+      this.meta.version++;
+      this.notice('n_rematch', {});
+      await this.persist();
+      this.broadcastRoom();
+      return;
+    }
+
+    if (msg.t === 'replace_with_bot') {
+      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', code: 'err_host_only' });
+      if (this.meta.status !== 'playing' || !this.game) return this.send(ws, { t: 'error', code: 'err_remove_game_only' });
+      const target = this.players.find((p) => p.id === msg.playerId);
+      if (!target || target.bot || !this.game.players.some((p) => p.id === target.id)) return this.send(ws, { t: 'error', code: 'err_bad_target' });
+      if (this.connectedIds().has(target.id)) return this.send(ws, { t: 'error', code: 'err_replace_offline_only' });
+      target.bot = true;
+      target.botLevel = 'normal';
+      target.tokenHash = ''; // the old seat token stops working
+      if (this.meta.offlineSince) delete this.meta.offlineSince[target.id];
+      if (this.meta.skipStreak) delete this.meta.skipStreak[target.id];
+      this.meta.version++;
+      this.notice('n_replaced_bot', { p: target.name });
       await this.persist();
       this.broadcastRoom();
       return;

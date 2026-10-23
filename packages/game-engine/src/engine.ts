@@ -59,6 +59,15 @@ export interface GameState {
   log: LogEntry[];
   logSeq: number;
   winnerId: string | null;
+  /** for the end-of-game summary (absent in games saved before it existed) */
+  stats?: GameStats;
+}
+
+export interface GameStats {
+  /** playerId -> coins at the start and after every regular turn */
+  coins: Record<string, number[]>;
+  /** playerId -> cardId -> coins that card brought in */
+  earned: Record<string, Record<string, number>>;
 }
 
 export type Action =
@@ -104,6 +113,7 @@ export function createGame(
     log: [],
     logSeq: 0,
     winnerId: null,
+    stats: { coins: Object.fromEntries(players.map((p) => [p.id, [STARTING_COINS]])), earned: {} },
   };
   for (const [cardId, n] of Object.entries(deck.copies)) {
     const row = rowOf(cardId);
@@ -136,8 +146,23 @@ function refillRow(s: GameState, row: Row) {
 
 // ---------------------------------------------------------------- helpers
 
+const INCOME_KEYS = new Set(['gain', 'pay', 'no_income_bonus', 'no_build_bonus']);
+
+function snapshot(s: GameState) {
+  if (!s.stats) return;
+  for (const p of s.players) (s.stats.coins[p.id] ??= []).push(p.coins);
+}
+
 function log(s: GameState, key: string, params: MsgParams, tone: LogEntry['tone'] = 'info') {
   s.log.push({ seq: ++s.logSeq, key, params, tone });
+  // Income by card: 'pay' goes to q, the other income messages to p.
+  if (s.stats && typeof params.card === 'string' && typeof params.n === 'number' && INCOME_KEYS.has(key)) {
+    const who = s.players.find((x) => x.name === (key === 'pay' ? params.q : params.p));
+    if (who) {
+      const e = (s.stats.earned[who.id] ??= {});
+      e[params.card] = (e[params.card] ?? 0) + params.n;
+    }
+  }
   if (s.log.length > LOG_LIMIT) s.log.splice(0, s.log.length - LOG_LIMIT);
 }
 
@@ -520,6 +545,7 @@ function win(s: GameState, p: PlayerState, reason: string) {
   s.extraTurn = false;
   s.pending = [];
   log(s, 'win', { p: p.name, reason }, 'win');
+  snapshot(s);
 }
 
 // ---------------------------------------------------------------- turn flow
@@ -553,6 +579,7 @@ function endTurn(s: GameState) {
   s.builtThisTurn = false;
   s.lastRoll = null;
   s.phase = 'roll';
+  snapshot(s);
 }
 
 // ---------------------------------------------------------------- disconnected players
@@ -562,11 +589,11 @@ function endTurn(s: GameState) {
  * Optional choices are declined, mandatory ones are made deterministically, nothing is built,
  * and any extra turn is forfeited. A turn skipped before rolling grants no Airport income.
  */
-export function forceSkipTurn(prev: GameState): GameState {
+export function forceSkipTurn(prev: GameState, reason: 'offline' | 'timeout' = 'offline'): GameState {
   if (prev.phase === 'ended') return prev;
   const s: GameState = structuredClone(prev);
   const p = active(s);
-  log(s, 'skip_turn', { p: p.name }, 'info');
+  log(s, reason === 'timeout' ? 'skip_turn_timeout' : 'skip_turn', { p: p.name }, 'info');
   s.extraTurn = false;
   if (s.phase === 'setup') { endTurn(s); return s; }
   if (s.phase === 'roll') {
