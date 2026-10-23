@@ -29,27 +29,54 @@ export function setMusicOn(on: boolean) {
 
 // ------------------------------------------------------------------ composition
 
-const BPM = 96;
-const STEP = 60 / BPM / 4; // 16th note
 const MIX = 0.35; // overall music level before the user volume
 const midi = (n: number) => 440 * 2 ** ((n - 69) / 12);
 
-// One chord per bar: [bass root, chord tones for the arpeggio]
-const BARS: [number, number[]][] = [
-  [48, [60, 64, 67]], // C
-  [45, [57, 60, 64]], // Am
-  [41, [57, 60, 65]], // F
-  [43, [59, 62, 67]], // G
-  [48, [60, 64, 67]], // C
-  [45, [57, 60, 64]], // Am
-  [50, [57, 62, 65]], // Dm
-  [43, [59, 62, 67]], // G
-];
-// Melody: one quarter note per beat (null = rest)
-const MELODY: (number | null)[][] = [
-  [76, 79, 81, 79], [76, 72, 74, 76], [81, 79, 77, 76], [74, null, 67, null],
-  [76, 79, 84, 83], [81, 79, 76, null], [77, 76, 74, 69], [71, 74, 79, null],
-];
+export type TrackName = 'game' | 'lobby';
+interface Track {
+  bpm: number;
+  /** one chord per bar: [bass root, chord tones for the arpeggio] */
+  bars: [number, number[]][];
+  /** one entry per beat (null = rest) */
+  melody: (number | null)[][];
+  /** game: bass on beats 1 and 3 plus a fifth; lobby: one long note per bar */
+  busyBass: boolean;
+  arp: { type: OscillatorType; gain: number };
+  lead: { type: OscillatorType; gain: number; beats: number };
+}
+
+const TRACKS: Record<TrackName, Track> = {
+  // Upbeat, while playing: C–Am–F–G–C–Am–Dm–G
+  game: {
+    bpm: 96,
+    bars: [
+      [48, [60, 64, 67]], [45, [57, 60, 64]], [41, [57, 60, 65]], [43, [59, 62, 67]],
+      [48, [60, 64, 67]], [45, [57, 60, 64]], [50, [57, 62, 65]], [43, [59, 62, 67]],
+    ],
+    melody: [
+      [76, 79, 81, 79], [76, 72, 74, 76], [81, 79, 77, 76], [74, null, 67, null],
+      [76, 79, 84, 83], [81, 79, 76, null], [77, 76, 74, 69], [71, 74, 79, null],
+    ],
+    busyBass: true,
+    arp: { type: 'triangle', gain: 0.16 },
+    lead: { type: 'sine', gain: 0.3, beats: 0.9 },
+  },
+  // Relaxed, while waiting in the lobby: F–Em–Dm–C–F–Em–Dm–G, slower and sparser
+  lobby: {
+    bpm: 76,
+    bars: [
+      [41, [60, 65, 69]], [40, [59, 64, 67]], [38, [57, 62, 65]], [36, [55, 60, 64]],
+      [41, [60, 65, 69]], [40, [59, 64, 67]], [38, [57, 62, 65]], [43, [59, 62, 67]],
+    ],
+    melody: [
+      [72, null, 69, null], [71, null, 67, null], [69, null, 65, null], [67, null, null, null],
+      [72, null, 76, null], [74, null, 71, null], [72, null, 69, null], [71, null, 74, null],
+    ],
+    busyBass: false,
+    arp: { type: 'sine', gain: 0.14 },
+    lead: { type: 'triangle', gain: 0.22, beats: 1.8 },
+  },
+};
 
 // ------------------------------------------------------------------ playback
 
@@ -58,7 +85,10 @@ let bus: GainNode | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
 let step = 0;
 let nextTime = 0;
-let wanted = false; // the game screen wants music (independent of the on/off setting)
+let wanted: TrackName | null = null; // the screen that wants music (independent of the on/off setting)
+let track: Track = TRACKS.game;
+let playing: TrackName | null = null;
+const stepLen = () => 60 / track.bpm / 4; // 16th note
 
 function note(freq: number, at: number, dur: number, type: OscillatorType, gain: number) {
   const ac = ctxRef!;
@@ -75,18 +105,23 @@ function note(freq: number, at: number, dur: number, type: OscillatorType, gain:
 }
 
 function scheduleStep(s: number, at: number) {
-  const bar = Math.floor(s / 16) % BARS.length;
+  const STEP = stepLen();
+  const bar = Math.floor(s / 16) % track.bars.length;
   const pos = s % 16;
-  const [root, chord] = BARS[bar];
-  if (pos === 0 || pos === 8) note(midi(root), at, STEP * 7, 'triangle', 0.5);
-  if (pos === 12) note(midi(root + 7), at, STEP * 3.5, 'triangle', 0.35);
+  const [root, chord] = track.bars[bar];
+  if (track.busyBass) {
+    if (pos === 0 || pos === 8) note(midi(root), at, STEP * 7, 'triangle', 0.5);
+    if (pos === 12) note(midi(root + 7), at, STEP * 3.5, 'triangle', 0.35);
+  } else if (pos === 0) {
+    note(midi(root), at, STEP * 15, 'sine', 0.45);
+  }
   if (pos % 2 === 0) {
     const tone = chord[(pos / 2) % chord.length] + (pos >= 8 ? 12 : 0);
-    note(midi(tone), at, STEP * 1.8, 'triangle', 0.16);
+    note(midi(tone), at, STEP * 1.8, track.arp.type, track.arp.gain);
   }
   if (pos % 4 === 0) {
-    const m = MELODY[bar][pos / 4];
-    if (m !== null) note(midi(m), at, STEP * 3.6, 'sine', 0.3);
+    const m = track.melody[bar][pos / 4];
+    if (m !== null) note(midi(m), at, STEP * 4 * track.lead.beats, track.lead.type, track.lead.gain);
   }
 }
 
@@ -96,13 +131,15 @@ function tick() {
   if (nextTime < ac.currentTime) nextTime = ac.currentTime + 0.05;
   while (nextTime < ac.currentTime + 0.25) {
     scheduleStep(step, nextTime);
-    step = (step + 1) % (BARS.length * 16);
-    nextTime += STEP;
+    step = (step + 1) % (track.bars.length * 16);
+    nextTime += stepLen();
   }
 }
 
 function start() {
-  if (timer || !isMusicOn()) return;
+  if (timer || !isMusicOn() || !wanted) return;
+  track = TRACKS[wanted];
+  playing = wanted;
   const ac = audioContext();
   if (!ac) return;
   ctxRef = ac;
@@ -118,6 +155,7 @@ function start() {
 function stop(fadeSeconds = 0.4) {
   if (timer) clearInterval(timer);
   timer = null;
+  playing = null;
   const b = bus;
   bus = null;
   if (b && ctxRef) {
@@ -126,14 +164,16 @@ function stop(fadeSeconds = 0.4) {
   }
 }
 
-/** The game screen calls this on mount; music plays when the setting is on. */
-export function startMusic() {
-  wanted = true;
+/** A screen calls this on mount. Switching track (lobby → game) cross-fades to the new one. */
+export function startMusic(name: TrackName = 'game') {
+  wanted = name;
+  if (playing && playing !== name) stop(0.8);
   start();
 }
-/** Called when leaving the game or when it ends. */
-export function stopMusic(fadeSeconds = 0.4) {
-  wanted = false;
+/** Called when leaving the screen or when the game ends. */
+export function stopMusic(fadeSeconds = 0.4, name?: TrackName) {
+  if (name && wanted !== name) return; // another screen already took over
+  wanted = null;
   stop(fadeSeconds);
 }
 

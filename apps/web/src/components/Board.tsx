@@ -389,9 +389,9 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
   // Background music while the game is running; fades out when the game ends or you leave.
   const gameOver = !!winner || g.phase === 'ended';
   useEffect(() => {
-    if (gameOver) { stopMusic(1.5); return; }
-    startMusic();
-    return () => stopMusic();
+    if (gameOver) { stopMusic(1.5, 'game'); return; }
+    startMusic('game');
+    return () => stopMusic(0.4, 'game');
   }, [gameOver]);
 
   // End-of-game sound, once, when the victory screen appears (after the final roll is revealed).

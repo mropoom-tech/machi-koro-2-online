@@ -1,13 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MAX_PLAYERS, MIN_PLAYERS, type RoomView } from '@mk2/game-engine';
 import { Button, DemoBadge } from './ui';
 import { LangToggle, useI18n } from '../i18n';
+import { SoundSettings } from './SoundSettings';
+import { startMusic, stopMusic } from '../music';
 
 export function Lobby({ room, me, onStart, onLeave, onTransferHost, onKick }: {
   room: RoomView; me: string; onStart: () => void; onLeave: () => void;
   onTransferHost: (playerId: string) => void; onKick: (playerId: string) => void;
 }) {
   const { u } = useI18n();
+  // Relaxed lobby music while waiting for friends (switches to the game track when it starts).
+  useEffect(() => {
+    startMusic('lobby');
+    return () => stopMusic(0.4, 'lobby');
+  }, []);
   const [confirm, setConfirm] = useState<{ id: string; kind: 'host' | 'kick' } | null>(null);
   const [copied, setCopied] = useState(false);
   const isHost = room.hostId === me;
@@ -20,11 +27,12 @@ export function Lobby({ room, me, onStart, onLeave, onTransferHost, onKick }: {
   return (
     <div className="flex min-h-full items-center justify-center px-4 py-10">
       <div className="pop-in w-full max-w-md rounded-3xl bg-white/90 p-6 shadow-xl ring-1 ring-black/5">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-teal-900">{u('lobby_title')}</h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="whitespace-nowrap text-2xl font-bold text-teal-900">{u('lobby_title')}</h2>
           <div className="flex items-center gap-2">
             {room.deckMode === 'DEMO_ONLY' && <DemoBadge />}
             <LangToggle className="bg-teal-800 text-white" />
+            <div className="rounded-full bg-teal-800 text-white"><SoundSettings align="right" /></div>
           </div>
         </div>
         <div className="mb-5 rounded-2xl bg-teal-50 p-4 text-center">

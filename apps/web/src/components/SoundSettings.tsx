@@ -4,7 +4,7 @@ import { useI18n } from '../i18n';
 import { getMusicVolume, isMusicOn, setMusicOn, setMusicVolume } from '../music';
 
 /** Header button that opens a small panel: volume slider, − / + buttons, mute, and test sounds. */
-export function SoundSettings() {
+export function SoundSettings({ align = 'left' }: { align?: 'left' | 'right' }) {
   const { u } = useI18n();
   const [open, setOpen] = useState(false);
   const [muted, setMutedState] = useState(isMuted);
@@ -47,7 +47,7 @@ export function SoundSettings() {
         {icon}
       </button>
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 w-72 rounded-2xl bg-white p-4 text-slate-800 shadow-2xl ring-1 ring-black/10">
+        <div className={`absolute ${align === 'left' ? 'left-0' : 'right-0'} top-full z-50 mt-2 w-72 rounded-2xl bg-white p-4 text-slate-800 shadow-2xl ring-1 ring-black/10`}>
           <div className="mb-2 font-semibold">{u('sound_settings')}</div>
           <div className="mb-1 flex items-center justify-between text-sm">
             <span className="text-slate-600">🔔 {u('sfx')}</span>
