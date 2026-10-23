@@ -45,20 +45,21 @@ export default function App() {
 function RoomScreen({ session, onLeave }: { session: Session; onLeave: () => void }) {
   const { u } = useI18n();
   const noteText = useNoteText();
-  const { room, conn, toast, fatal, left, cardTicket, act, start, leave, transferHost, kick, skipTurn, removePlayer, forfeit } = useRoom(session);
+  const { room, conn, toast, fatal, left, cardTicket, act, start, leave, transferHost, kick, skipTurn, removePlayer, forfeit, addBot, setSpectator } = useRoom(session);
+  const spectating = !!room?.players.find((p) => p.id === session.playerId)?.spectator;
   const [confirmForfeit, setConfirmForfeit] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
 
   // Server confirmed we left the lobby seat (or closed the socket on purpose).
   useEffect(() => {
     if (!left) return;
-    if (!room || room.status === 'lobby') clearSession(session.code);
+    if (!room || room.status === 'lobby' || spectating) clearSession(session.code);
     onLeave();
   }, [left]);
 
   const requestLeave = () => {
     if (conn !== 'open') { onLeave(); return; }
-    if (room?.status === 'lobby') leave();
+    if (room?.status === 'lobby' || spectating) leave();
     else setConfirmLeave(true);
   };
 
@@ -84,7 +85,8 @@ function RoomScreen({ session, onLeave }: { session: Session; onLeave: () => voi
     <CardTicketContext.Provider value={cardTicket}>
       <Toast toast={toast} />
       {room.status === 'lobby' || !room.game
-        ? <Lobby room={room} me={session.playerId} onStart={start} onLeave={requestLeave} onTransferHost={transferHost} onKick={kick} />
+        ? <Lobby room={room} me={session.playerId} onStart={start} onLeave={requestLeave} onTransferHost={transferHost} onKick={kick}
+            onAddBot={addBot} onSetSpectator={setSpectator} />
         : <Board room={room} me={session.playerId} conn={conn} act={act} onSkipTurn={skipTurn} onRemovePlayer={removePlayer} onLeave={room.status === 'ended' ? onLeave : requestLeave} />}
       <Modal open={confirmLeave} onClose={() => { setConfirmLeave(false); setConfirmForfeit(false); }}>
         {!confirmForfeit ? (

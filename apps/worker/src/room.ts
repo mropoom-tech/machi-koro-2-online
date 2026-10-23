@@ -1,12 +1,12 @@
 import { DurableObject } from 'cloudflare:workers';
 import {
-  applyAction, createGame, DEMO_DECK, forceSkipTurn, removePlayer, MAX_MISSED_TURNS, MAX_PLAYERS, MIN_PLAYERS, parseClientMessage, sanitizeName, toPublic, verifiedDeck,
+  applyAction, botAction, createGame, DEMO_DECK, forceSkipTurn, removePlayer, MAX_MISSED_TURNS, MAX_PLAYERS, MAX_SPECTATORS, MIN_PLAYERS, parseClientMessage, sanitizeName, toPublic, verifiedDeck,
   type DeckManifest, type GameState, type MsgParams, type RoomView, type ServerMessage,
 } from '@mk2/game-engine';
 import type { Env } from './index';
 import { issueCardTicket } from './tickets';
 
-interface StoredPlayer { id: string; name: string; tokenHash: string }
+interface StoredPlayer { id: string; name: string; tokenHash: string; bot?: boolean; spectator?: boolean }
 interface Meta {
   code: string; hostId: string; status: RoomView['status']; version: number; createdAt: number;
   expiresAt?: number;
@@ -18,6 +18,8 @@ interface Meta {
   /** playerId -> consecutive turns skipped */
   skipStreak?: Record<string, number>;
   turnStartedAt?: number;
+  /** when the active bot makes its next move */
+  botAt?: number | null;
 }
 interface Attachment { playerId: string | null }
 
@@ -25,6 +27,8 @@ const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 const PROCESSED_LIMIT = 200;
 const HOST_GRACE_MS = 30 * 1000;
 const AUTO_SKIP_MS = 45 * 1000;
+// long enough for clients to show the dice before the next bot move
+const BOT_DELAY_MS = 2200;
 
 function randomHex(bytes: number): string {
   const a = crypto.getRandomValues(new Uint8Array(bytes));
@@ -67,6 +71,9 @@ export class GameRoom extends DurableObject<Env> {
         const key = `${this.game.turn}:${this.game.activeIndex}:${this.game.setupRound}`;
         if (key !== this.meta.turnKey) { this.meta.turnKey = key; this.meta.turnStartedAt = Date.now(); }
       }
+      const g = this.game;
+      const bot = this.meta.status === 'playing' && g && this.players.find((p) => p.id === g.players[g.activeIndex]?.id)?.bot;
+      this.meta.botAt = bot ? Date.now() + BOT_DELAY_MS : null;
     }
     await this.ctx.storage.put({ meta: this.meta, players: this.players, game: this.game, processed: this.processed });
     await this.scheduleAlarm();
@@ -79,6 +86,7 @@ export class GameRoom extends DurableObject<Env> {
     if (this.meta.hostOfflineSince) times.push(this.meta.hostOfflineSince + HOST_GRACE_MS);
     const skipAt = this.autoSkipAt();
     if (skipAt) times.push(skipAt);
+    if (this.meta.botAt) times.push(this.meta.botAt);
     await this.ctx.storage.setAlarm(Math.min(...times));
   }
 
@@ -125,10 +133,7 @@ export class GameRoom extends DurableObject<Env> {
     m.version++;
     if (forfeit) this.notice('n_forfeit', { p: name });
     else this.notice('n_removed', { p: name, reason, n: MAX_MISSED_TURNS });
-    if (m.hostId === pid && this.players.length > 0) {
-      const online = this.connectedIds();
-      this.setHost((this.players.find((p) => online.has(p.id)) ?? this.players[0]).id, 'left');
-    }
+    if (m.hostId === pid) this.pickNewHost();
     await this.persist();
     this.broadcastRoom();
   }
@@ -143,6 +148,7 @@ export class GameRoom extends DurableObject<Env> {
     if (!this.meta) return;
     const now = Date.now();
     if (now >= (this.meta.expiresAt ?? 0)) return this.wipe(); // expired from inactivity
+    if (this.meta.botAt && now >= this.meta.botAt) return this.botMove();
     const skipAt = this.autoSkipAt();
     if (skipAt && now >= skipAt) {
       await this.skipActive();
@@ -162,6 +168,27 @@ export class GameRoom extends DurableObject<Env> {
       return;
     }
     await this.scheduleAlarm();
+  }
+
+  private async botMove() {
+    const g = this.game;
+    if (!g || this.meta!.status !== 'playing') { this.meta!.botAt = null; return this.scheduleAlarm(); }
+    const r = applyAction(g, g.players[g.activeIndex].id, botAction(g));
+    this.game = r.ok ? r.state : forceSkipTurn(g);
+    if (this.game.phase === 'ended') this.meta!.status = 'ended';
+    this.meta!.version++;
+    await this.persist();
+    this.broadcastRoom();
+  }
+
+  private humans() { return this.players.filter((p) => !p.bot); }
+  private seated() { return this.players.filter((p) => !p.spectator); }
+
+  /** Hands the host role to an online human (or any human) after the host leaves. */
+  private pickNewHost() {
+    const online = this.connectedIds();
+    const next = this.humans().find((p) => online.has(p.id)) ?? this.humans()[0];
+    if (next) this.setHost(next.id, 'left');
   }
 
   private setHost(playerId: string, reason: 'auto' | 'manual' | 'left') {
@@ -187,10 +214,10 @@ export class GameRoom extends DurableObject<Env> {
     return verifiedDeck() ?? DEMO_DECK;
   }
 
-  private async addPlayer(name: string): Promise<{ token: string; playerId: string }> {
+  private async addPlayer(name: string, spectator = false): Promise<{ token: string; playerId: string }> {
     const token = randomHex(16); // 128-bit bearer secret; only its hash is stored
     const playerId = randomHex(6);
-    this.players.push({ id: playerId, name, tokenHash: await sha256(token) });
+    this.players.push({ id: playerId, name, tokenHash: await sha256(token), ...(spectator ? { spectator: true } : {}) });
     return { token, playerId };
   }
 
@@ -211,12 +238,20 @@ export class GameRoom extends DurableObject<Env> {
     if (!this.meta) return json({ error: 'err_room_not_found' }, 404);
 
     if (url.pathname === '/join' && req.method === 'POST') {
-      const name = sanitizeName(((await req.json()) as any)?.name);
+      const body = (await req.json()) as any;
+      const name = sanitizeName(body?.name);
+      const spectate = body?.spectate === true;
       if (!name) return json({ error: 'err_need_name' }, 400);
-      if (this.meta.status !== 'lobby') return json({ error: 'err_game_started_join' }, 409);
-      if (this.players.length >= MAX_PLAYERS) return json({ error: 'err_room_full', params: { max: MAX_PLAYERS } }, 409);
+      if (spectate) {
+        if (this.players.filter((p) => p.spectator).length >= MAX_SPECTATORS) {
+          return json({ error: 'err_spectators_full', params: { max: MAX_SPECTATORS } }, 409);
+        }
+      } else {
+        if (this.meta.status !== 'lobby') return json({ error: 'err_game_started_join' }, 409);
+        if (this.seated().length >= MAX_PLAYERS) return json({ error: 'err_room_full', params: { max: MAX_PLAYERS } }, 409);
+      }
       if (this.players.some((p) => p.name === name)) return json({ error: 'err_name_taken' }, 409);
-      const res = await this.addPlayer(name);
+      const res = await this.addPlayer(name, spectate);
       this.meta.version++;
       await this.persist();
       this.broadcastRoom();
@@ -262,8 +297,8 @@ export class GameRoom extends DurableObject<Env> {
       autoSkipAt: this.autoSkipAt(),
       serverNow: Date.now(),
       players: this.players.map((p) => ({
-        id: p.id, name: p.name, connected: online.has(p.id), isHost: p.id === m.hostId,
-        missedTurns: m.skipStreak?.[p.id] ?? 0,
+        id: p.id, name: p.name, connected: !!p.bot || online.has(p.id), isHost: p.id === m.hostId,
+        missedTurns: m.skipStreak?.[p.id] ?? 0, isBot: !!p.bot, spectator: !!p.spectator,
       })),
       game: this.game ? toPublic(this.game) : null,
     };
@@ -332,10 +367,42 @@ export class GameRoom extends DurableObject<Env> {
       return;
     }
 
+    if (msg.t === 'add_bot') {
+      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', code: 'err_host_only_bot' });
+      if (this.meta.status !== 'lobby') return this.send(ws, { t: 'error', code: 'err_already_started' });
+      if (this.seated().length >= MAX_PLAYERS) return this.send(ws, { t: 'error', code: 'err_room_full', params: { max: MAX_PLAYERS } });
+      let n = 1;
+      while (this.players.some((p) => p.name === `Bot ${n}`)) n++;
+      // Bots have no token: the empty hash never matches a real one.
+      this.players.push({ id: randomHex(6), name: `Bot ${n}`, tokenHash: '', bot: true });
+      this.meta.version++;
+      await this.persist();
+      this.broadcastRoom();
+      return;
+    }
+
+    if (msg.t === 'set_spectator') {
+      if (this.meta.status !== 'lobby') return this.send(ws, { t: 'error', code: 'err_seat_lobby_only' });
+      const me = this.players.find((p) => p.id === playerId)!;
+      if (!!me.spectator === msg.spectator) return;
+      if (!msg.spectator && this.seated().length >= MAX_PLAYERS) {
+        return this.send(ws, { t: 'error', code: 'err_room_full', params: { max: MAX_PLAYERS } });
+      }
+      if (msg.spectator && this.players.filter((p) => p.spectator).length >= MAX_SPECTATORS) {
+        return this.send(ws, { t: 'error', code: 'err_spectators_full', params: { max: MAX_SPECTATORS } });
+      }
+      if (msg.spectator) me.spectator = true; else delete me.spectator;
+      this.meta.version++;
+      await this.persist();
+      this.broadcastRoom();
+      return;
+    }
+
     if (msg.t === 'kick') {
       if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', code: 'err_host_only_kick' });
-      if (this.meta.status !== 'lobby') return this.send(ws, { t: 'error', code: 'err_kick_lobby_only' });
       const target = this.players.find((p) => p.id === msg.playerId);
+      // Seated players are part of the game once it starts; spectators can be removed any time.
+      if (this.meta.status !== 'lobby' && !target?.spectator) return this.send(ws, { t: 'error', code: 'err_kick_lobby_only' });
       if (!target || target.id === playerId) return this.send(ws, { t: 'error', code: 'err_bad_target' });
       this.players = this.players.filter((p) => p.id !== target.id);
       for (const s of this.ctx.getWebSockets()) {
@@ -360,6 +427,7 @@ export class GameRoom extends DurableObject<Env> {
 
     if (msg.t === 'forfeit') {
       if (this.meta.status !== 'playing' || !this.game) return this.send(ws, { t: 'error', code: 'err_forfeit_game_only' });
+      if (!this.game.players.some((p) => p.id === playerId)) return this.send(ws, { t: 'error', code: 'err_spectator_only_watch' });
       await this.removeFromGame(playerId, 'forfeit', true);
       return;
     }
@@ -376,7 +444,8 @@ export class GameRoom extends DurableObject<Env> {
     }
 
     if (msg.t === 'leave') {
-      if (this.meta.status !== 'lobby') {
+      const leaving = this.players.find((p) => p.id === playerId);
+      if (this.meta.status !== 'lobby' && !leaving?.spectator) {
         // Seats are part of the game state once it starts; leaving just disconnects (the player can return).
         return ws.close(4002, 'left');
       }
@@ -387,12 +456,9 @@ export class GameRoom extends DurableObject<Env> {
           s.close(4002, 'left');
         }
       }
-      if (this.players.length === 0) return this.wipe();
+      if (this.humans().length === 0) return this.wipe();
       this.meta.version++;
-      if (this.meta.hostId === playerId) {
-        const online = this.connectedIds();
-        this.setHost((this.players.find((p) => online.has(p.id)) ?? this.players[0]).id, 'left');
-      }
+      if (this.meta.hostId === playerId) this.pickNewHost();
       await this.persist();
       this.broadcastRoom();
       return;
@@ -401,9 +467,9 @@ export class GameRoom extends DurableObject<Env> {
     if (msg.t === 'start') {
       if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', code: 'err_host_only_start' });
       if (this.meta.status !== 'lobby') return this.send(ws, { t: 'error', code: 'err_already_started' });
-      if (this.players.length < MIN_PLAYERS) return this.send(ws, { t: 'error', code: 'err_min_players', params: { min: MIN_PLAYERS } });
+      if (this.seated().length < MIN_PLAYERS) return this.send(ws, { t: 'error', code: 'err_min_players', params: { min: MIN_PLAYERS } });
       const seed = crypto.getRandomValues(new Uint32Array(1))[0];
-      this.game = createGame(this.players.map(({ id, name }) => ({ id, name })), this.deck(), seed);
+      this.game = createGame(this.seated().map(({ id, name }) => ({ id, name })), this.deck(), seed);
       this.meta.status = 'playing';
       this.meta.version++;
       await this.persist();

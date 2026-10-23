@@ -53,7 +53,8 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 }
 
 export const createRoom = (name: string) => post<CreateRoomResponse>('/api/rooms', { name });
-export const joinRoom = (code: string, name: string) => post<JoinRoomResponse>(`/api/rooms/${code}/join`, { name });
+export const joinRoom = (code: string, name: string, spectate = false) =>
+  post<JoinRoomResponse>(`/api/rooms/${code}/join`, { name, spectate });
 
 export type ConnState = 'connecting' | 'open' | 'reconnecting' | 'failed';
 
@@ -158,8 +159,10 @@ export function useRoom(session: Session | null) {
   const skipTurn = useCallback(() => send({ t: 'skip_turn' }), [send]);
   const forfeit = useCallback(() => send({ t: 'forfeit' }), [send]);
   const removePlayer = useCallback((playerId: string) => send({ t: 'remove_player', playerId }), [send]);
+  const addBot = useCallback(() => send({ t: 'add_bot' }), [send]);
+  const setSpectator = useCallback((spectator: boolean) => send({ t: 'set_spectator', spectator }), [send]);
 
-  return { room, conn, toast, fatal, left, cardTicket, act, start, leave, transferHost, kick, skipTurn, removePlayer, forfeit };
+  return { room, conn, toast, fatal, left, cardTicket, act, start, leave, transferHost, kick, skipTurn, removePlayer, forfeit, addBot, setSpectator };
 }
 
 /** URL of a (non-public) card image, readable only with this room's signed ticket. */

@@ -13,8 +13,8 @@ export function Landing({ initialCode, onEnter }: { initialCode?: string; onEnte
   const [error, setError] = useState<Note | null>(null);
   const [mode, setMode] = useState<'create' | 'join'>(initialCode ? 'join' : 'create');
 
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
+  const submit = async (e: FormEvent | undefined, spectate = false) => {
+    e?.preventDefault();
     const n = name.trim();
     if (!n) return setError({ id: Date.now(), server: 'err_need_name' });
     setBusy(true); setError(null);
@@ -27,7 +27,7 @@ export function Landing({ initialCode, onEnter }: { initialCode?: string; onEnte
       } else {
         const c = normalizeCode(code);
         if (!CODE_RE.test(c)) { setError({ id: Date.now(), ui: 'bad_code_format' }); return; }
-        const r = await joinRoom(c, n);
+        const r = await joinRoom(c, n, spectate);
         s = { code: c, token: r.token, playerId: r.playerId, name: n };
       }
       saveSession(s);
@@ -77,6 +77,12 @@ export function Landing({ initialCode, onEnter }: { initialCode?: string; onEnte
         <Button type="submit" disabled={busy} className="w-full py-3 text-lg">
           {busy ? u('working') : u(mode === 'create' ? 'create_new_room' : 'join')}
         </Button>
+        {mode === 'join' && (
+          <>
+            <Button type="button" variant="secondary" disabled={busy} onClick={() => submit(undefined, true)} className="mt-2 w-full">{u('watch')}</Button>
+            <p className="mt-1 text-center text-xs text-slate-400">{u('watch_hint')}</p>
+          </>
+        )}
         <p className="mt-4 text-center text-xs text-slate-500">{u('no_signup')}</p>
       </form>
     </div>

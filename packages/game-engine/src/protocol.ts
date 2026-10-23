@@ -6,7 +6,12 @@ export interface LobbyPlayer {
   id: string; name: string; connected: boolean; isHost: boolean;
   /** consecutive turns skipped while disconnected */
   missedTurns: number;
+  isBot: boolean;
+  /** watching only: not seated in the game */
+  spectator: boolean;
 }
+
+export const MAX_SPECTATORS = 20;
 
 export const MAX_MISSED_TURNS = 3;
 
@@ -32,6 +37,8 @@ export type ClientMessage =
   | { t: 'skip_turn' }
   | { t: 'remove_player'; playerId: string }
   | { t: 'forfeit' }
+  | { t: 'add_bot' }
+  | { t: 'set_spectator'; spectator: boolean }
   | { t: 'action'; actionId: string; expectedVersion: number; action: Action }
   | { t: 'ping' };
 
@@ -90,6 +97,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'kick': return isStr(m.playerId) ? { t: 'kick', playerId: m.playerId } : null;
     case 'skip_turn': return { t: 'skip_turn' };
     case 'forfeit': return { t: 'forfeit' };
+    case 'add_bot': return { t: 'add_bot' };
+    case 'set_spectator': return typeof m.spectator === 'boolean' ? { t: 'set_spectator', spectator: m.spectator } : null;
     case 'remove_player': return isStr(m.playerId) ? { t: 'remove_player', playerId: m.playerId } : null;
     case 'ping': return { t: 'ping' };
     case 'action': {
