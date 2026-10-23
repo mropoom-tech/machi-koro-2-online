@@ -1,7 +1,8 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   applyAction, createGame, forceSkipTurn, removePlayer, DEMO_DECK, ESTABLISHMENTS, LANDMARKS, MARKET_SIZE, toPublic, verifiedDeck,
-  parseClientMessage, type Action, type GameState,
+  parseClientMessage, t, hasMessage, type Action, type GameState,
 } from '../src';
 
 const names = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `p${i}`, name: `P${i}` }));
@@ -105,7 +106,7 @@ describe('turn validation', () => {
     let s = game();
     s = act(s, 'p0', { type: 'roll', dice: 1 }, [4]);
     putInMarket(s, 'mine');
-    expect(applyAction(s, 'p0', { type: 'build', cardId: 'mine' })).toMatchObject({ ok: false, error: 'เหรียญไม่พอ' });
+    expect(applyAction(s, 'p0', { type: 'build', cardId: 'mine' })).toMatchObject({ ok: false, error: 'err_no_coins' });
     s.players[0].coins = 10;
     s = act(s, 'p0', { type: 'build', cardId: 'mine' });
     expect(s.players[0].establishments.mine).toBe(1);
@@ -348,7 +349,7 @@ describe('skipping a disconnected player', () => {
     expect(t.activeIndex).toBe(1);
     expect(t.phase).toBe('roll');
     expect(t.players[0].coins).toBe(0);
-    expect(t.log.at(-1)!.text).toContain('ข้ามเทิร์น');
+    expect(t.log.at(-1)!).toMatchObject({ key: 'skip_turn', params: { p: 'P0' } });
   });
   it('declines Business Center and makes the mandatory Moving Company gift', () => {
     let s = game(2);
@@ -405,7 +406,7 @@ describe('removing a player', () => {
   });
 
   it('logs a forfeit differently', () => {
-    expect(removePlayer(game(3), 'p1', 'forfeit').log.at(-1)!.text).toContain('P1 ยอมแพ้');
+    expect(removePlayer(game(3), 'p1', 'forfeit').log.at(-1)!).toMatchObject({ key: 'player_forfeit', params: { p: 'P1' } });
   });
 
   it('the last remaining player wins', () => {
@@ -420,6 +421,27 @@ describe('removing a player', () => {
     const t = removePlayer(s, 'p2');
     expect(t.phase).toBe('roll');
     expect(t.activeIndex).toBe(0);
+  });
+});
+
+describe('i18n', () => {
+  it('renders log entries in Thai and English with card names per language', () => {
+    let s = game(2);
+    s.players[0].establishments = { bakery: 1 };
+    s = act(s, 'p0', { type: 'roll', dice: 1 }, [2]);
+    const gain = s.log.find((l) => l.key === 'gain')!;
+    expect(t('th', gain.key, gain.params)).toBe('ร้านเบเกอรี: P0 รับ 2 เหรียญจากธนาคาร');
+    expect(t('en', gain.key, gain.params)).toBe('Bakery: P0 gets 2 coins from the bank');
+  });
+
+  it('has a TH and EN message for every key the engine and server use', () => {
+    const src = ['src/engine.ts', '../../apps/worker/src/room.ts', '../../apps/worker/src/index.ts']
+      .map((f) => readFileSync(new URL('../' + f, import.meta.url), 'utf8')).join('\n');
+    const keys = new Set([...src.matchAll(/'((?:err|n|r|why|reason)_[a-z_]+|game_start|setup_done|pass|roll|pay|gain|no_income_bonus|no_build_bonus|extra_turn_next|extra_turn|zero_coin|build_landmark|build|park|exchange_skip|exchange|give_auto|give|win|skip_turn|player_forfeit|player_removed)'/g)].map((m) => m[1]));
+    expect(keys.size).toBeGreaterThan(40);
+    for (const k of keys) expect(hasMessage(k), k).toBe(true);
+    // no Thai text left hard-coded in server/engine code paths
+    for (const line of src.split('\n')) if (!line.trim().startsWith('//')) expect(/[฀-๿]/.test(line), line).toBe(false);
   });
 });
 

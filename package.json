@@ -11,5 +11,8 @@
     "dev:web": "npm run dev -w apps/web",
     "dev:worker": "npm run dev -w apps/worker",
     "build:web": "npm run build -w apps/web"
+  },
+  "devDependencies": {
+    "sharp": "^0.33.5"
   }
 }

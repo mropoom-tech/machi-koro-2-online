@@ -1,4 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
+import { hasMessage } from '@mk2/game-engine';
+import { useI18n } from '../i18n';
+import type { Note } from '../net';
 
 export function Modal({ open, onClose, children, wide }: { open: boolean; onClose?: () => void; children: ReactNode; wide?: boolean }) {
   useEffect(() => {
@@ -58,21 +61,33 @@ export function Coin({ n, bump }: { n: number; bump?: boolean }) {
 }
 
 export function DemoBadge() {
+  const { u } = useI18n();
   return (
     <span
       className="rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-bold tracking-wide text-white shadow"
-      title="จำนวนสำเนาการ์ดยังไม่ได้รับการยืนยันจาก Rulebook — ใช้เพื่อทดสอบระบบเท่านั้น"
+      title={u('demo_badge_title')}
     >
       DEMO / UNVERIFIED DECK
     </span>
   );
 }
 
-export function Toast({ toast }: { toast: { id: number; text: string } | null }) {
+/** Renders a server message key or UI key in the current language. */
+export function useNoteText() {
+  const { u, m } = useI18n();
+  return (n: Note) => {
+    if (n.ui) return u(n.ui, n.params);
+    if (n.server && hasMessage(n.server)) return m(n.server, n.params);
+    return u(n.server === 'net_error' ? 'net_error' : 'generic_error');
+  };
+}
+
+export function Toast({ toast }: { toast: Note | null }) {
+  const text = useNoteText();
   if (!toast) return null;
   return (
     <div key={toast.id} className="pop-in pointer-events-none fixed left-1/2 top-4 z-[60] -translate-x-1/2 rounded-xl bg-slate-900/90 px-4 py-2 text-sm text-white shadow-lg">
-      {toast.text}
+      {text(toast)}
     </div>
   );
 }

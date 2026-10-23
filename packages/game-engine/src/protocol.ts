@@ -1,5 +1,6 @@
 import type { Action, PublicGameState } from './engine';
 import type { DeckMode } from './decks';
+import type { MsgParams } from './i18n';
 
 export interface LobbyPlayer {
   id: string; name: string; connected: boolean; isHost: boolean;
@@ -35,11 +36,11 @@ export type ClientMessage =
   | { t: 'ping' };
 
 export type ServerMessage =
-  | { t: 'welcome'; playerId: string }
+  | { t: 'welcome'; playerId: string; cardTicket: string | null }
   | { t: 'room'; room: RoomView }
   | { t: 'ack'; actionId: string }
-  | { t: 'error'; message: string; actionId?: string; fatal?: boolean }
-  | { t: 'notice'; text: string }
+  | { t: 'error'; code: string; params?: MsgParams; actionId?: string; fatal?: boolean }
+  | { t: 'notice'; key: string; params: MsgParams }
   | { t: 'pong' };
 
 export interface CreateRoomResponse { code: string; token: string; playerId: string }

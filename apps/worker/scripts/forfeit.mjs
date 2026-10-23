@@ -15,8 +15,8 @@ function client(code, token) {
     const m = JSON.parse(e.data);
     if (m.t === 'room') c.room = m.room;
     if (m.t === 'welcome') c.id = m.playerId;
-    if (m.t === 'error') c.errors.push(m.message);
-    if (m.t === 'notice') c.notices.push(m.text);
+    if (m.t === 'error') c.errors.push(m.code);
+    if (m.t === 'notice') c.notices.push(m);
   };
   ws.onclose = (e) => (c.closeCode = e.code);
   c.send = (m) => ws.send(JSON.stringify(m));
@@ -32,15 +32,15 @@ await until(() => a.room?.players.filter((p) => p.connected).length === 3);
 
 b.send({ t: 'forfeit' });
 await until(() => b.errors.length > 0);
-check(b.errors.at(-1).includes('ระหว่างเกม'), 'cannot forfeit in the lobby');
+check(b.errors.at(-1) === 'err_forfeit_game_only', 'cannot forfeit in the lobby');
 
 a.send({ t: 'start' });
 await until(() => a.room.status === 'playing' && b.room.status === 'playing');
 b.send({ t: 'forfeit' });
 await until(() => b.closeCode !== null && a.room.game.players.length === 2);
 check(b.closeCode === 4005, 'forfeiting player gets close code 4005');
-check(a.notices.some((n) => n.includes('B ยอมแพ้')), 'others are notified');
-check(a.room.game.log.some((l) => l.text.includes('🏳️ B ยอมแพ้')), 'forfeit logged');
+check(a.notices.some((n) => n.key === 'n_forfeit' && n.params.p === 'B'), 'others are notified');
+check(a.room.game.log.some((l) => l.key === 'player_forfeit' && l.params.p === 'B'), 'forfeit logged');
 check(a.room.status === 'playing', 'game continues with 2 players');
 const reB = client(code, tB);
 await until(() => reB.closeCode !== null);

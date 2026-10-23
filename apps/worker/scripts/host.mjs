@@ -17,8 +17,8 @@ function client(code, token) {
     const m = JSON.parse(e.data);
     if (m.t === 'room') c.room = m.room;
     if (m.t === 'welcome') c.id = m.playerId;
-    if (m.t === 'notice') c.notices.push(m.text);
-    if (m.t === 'error') c.errors.push(m.message);
+    if (m.t === 'notice') c.notices.push(m);
+    if (m.t === 'error') c.errors.push(m.code);
   };
   ws.onclose = (e) => (c.closeCode = e.code);
   c.send = (m) => ws.send(JSON.stringify(m));
@@ -41,7 +41,7 @@ check(a.room.hostId === a.id, 'non-host cannot transfer host');
 // manual transfer A -> B
 a.send({ t: 'transfer_host', playerId: b.id });
 await until(() => c.room.hostId === b.id);
-check(c.notices.some((n) => n.includes('B เป็นหัวห้องคนใหม่')), 'manual transfer A → B broadcasts notice');
+check(c.notices.some((n) => n.key === 'n_new_host' && n.params.p === 'B'), 'manual transfer A → B broadcasts notice');
 
 // host B leaves the lobby -> host passes to an online player, B's seat removed, B socket closed 4002
 b.send({ t: 'leave' });
@@ -61,7 +61,7 @@ await sleep(5000);
 check(other.room.hostId === hostClient.id, 'host keeps role during grace period (5s)');
 console.log('      waiting for the 30s grace period…');
 await until(() => other.room.hostId === other.id, 40000);
-check(other.notices.some((n) => n.includes('หลุดการเชื่อมต่อ')), 'host auto-transferred to online player after grace');
+check(other.notices.some((n) => n.key === 'n_new_host' && n.params.why === 'why_auto'), 'host auto-transferred to online player after grace');
 
 // last players leave -> room deleted
 other.send({ t: 'leave' });

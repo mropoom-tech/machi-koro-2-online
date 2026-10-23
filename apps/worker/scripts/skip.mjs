@@ -18,7 +18,7 @@ function client(code, token) {
     const m = JSON.parse(e.data);
     if (m.t === 'room') c.room = m.room;
     if (m.t === 'welcome') c.id = m.playerId;
-    if (m.t === 'error') c.errors.push(m.message);
+    if (m.t === 'error') c.errors.push(m.code);
   };
   ws.onclose = (e) => (c.closeCode = e.code);
   c.send = (m) => ws.send(JSON.stringify(m));
@@ -37,7 +37,7 @@ await until(() => a.room?.players.filter((p) => p.connected).length === 3);
 
 // --- kick
 let err = b.lastError(); b.send({ t: 'kick', playerId: c.id });
-check((await err).includes('หัวห้อง'), 'non-host cannot kick');
+check((await err) === 'err_host_only_kick', 'non-host cannot kick');
 a.send({ t: 'kick', playerId: c.id });
 await until(() => c.closeCode !== null && a.room.players.length === 2);
 check(c.closeCode === 4003, 'kicked player receives close code 4003');
@@ -50,7 +50,7 @@ check(reC.closeCode === 4001, 'kicked player token no longer valid');
 a.send({ t: 'start' });
 await until(() => a.room.status === 'playing' && b.room?.status === 'playing');
 err = a.lastError(); a.send({ t: 'kick', playerId: b.id });
-check((await err).includes('ก่อนเริ่มเกม'), 'kick refused once the game has started');
+check((await err) === 'err_kick_lobby_only', 'kick refused once the game has started');
 
 const activeId = () => a.room.game.players[a.room.game.activeIndex].id;
 const pass = async (cl) => {
@@ -62,7 +62,7 @@ if (activeId() !== b.id) await pass(a);
 check(activeId() === b.id, "it is B's turn");
 
 err = a.lastError(); a.send({ t: 'skip_turn' });
-check((await err).includes('หลุด'), 'cannot skip a connected player');
+check((await err) === 'err_skip_offline_only', 'cannot skip a connected player');
 
 // --- manual skip by host
 b.ws.close();
@@ -72,7 +72,7 @@ let v = a.room.version;
 a.send({ t: 'skip_turn' });
 await until(() => a.room.version > v);
 check(activeId() === a.id, 'host skipped offline B → A is active');
-check(a.room.game.log.at(-1).text.includes('ข้ามเทิร์นของ B'), 'skip logged');
+check(a.room.game.log.at(-1).key === 'skip_turn' && a.room.game.log.at(-1).params.p === 'B', 'skip logged');
 check(a.room.autoSkipAt === null, 'no deadline while active player is online');
 
 // --- automatic skip: A passes, turn returns to offline B, server skips after the grace period

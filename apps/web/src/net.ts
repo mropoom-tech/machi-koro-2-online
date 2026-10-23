@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Action, CreateRoomResponse, JoinRoomResponse, RoomView, ServerMessage } from '@mk2/game-engine';
+import type { Action, CreateRoomResponse, JoinRoomResponse, MsgParams, RoomView, ServerMessage } from '@mk2/game-engine';
+import type { UiKey } from './i18n';
 
 export const API_URL: string = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://127.0.0.1:8787';
 
@@ -31,15 +32,23 @@ export function rememberName(n: string) {
   try { localStorage.setItem('mk2:name', n); } catch { /* ignore */ }
 }
 
+/** A message to show the user: either a server message key or a UI string key. */
+export type Note = { id: number; server?: string; ui?: UiKey; params?: MsgParams };
+
+/** Thrown by REST calls; `code` is a server message key (or 'net_error' / 'generic_error'). */
+export class ApiError extends Error {
+  constructor(public code: string, public params: MsgParams = {}) { super(code); }
+}
+
 async function post<T>(path: string, body: unknown): Promise<T> {
   let res: Response;
   try {
     res = await fetch(API_URL + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
   } catch {
-    throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้');
+    throw new ApiError('net_error');
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((data as any).error ?? 'เกิดข้อผิดพลาด');
+  if (!res.ok) throw new ApiError((data as any).error ?? 'generic_error', (data as any).params ?? {});
   return data as T;
 }
 
@@ -52,8 +61,9 @@ export type ConnState = 'connecting' | 'open' | 'reconnecting' | 'failed';
 export function useRoom(session: Session | null) {
   const [room, setRoom] = useState<RoomView | null>(null);
   const [conn, setConn] = useState<ConnState>('connecting');
-  const [toast, setToast] = useState<{ id: number; text: string } | null>(null);
-  const [fatal, setFatal] = useState<string | null>(null);
+  const [toast, setToast] = useState<Note | null>(null);
+  const [fatal, setFatal] = useState<Note | null>(null);
+  const [cardTicket, setCardTicket] = useState<string | null>(null);
   const [left, setLeft] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const roomRef = useRef<RoomView | null>(null);
@@ -76,12 +86,13 @@ export function useRoom(session: Session | null) {
       };
       ws.onmessage = (e) => {
         const m = JSON.parse(e.data) as ServerMessage;
-        if (m.t === 'welcome') { attempt = 0; setConn('open'); }
+        if (m.t === 'welcome') { attempt = 0; setConn('open'); setCardTicket(m.cardTicket); }
         else if (m.t === 'room') setRoom(m.room);
-        else if (m.t === 'notice') setToast({ id: Date.now(), text: m.text });
+        else if (m.t === 'notice') setToast({ id: Date.now(), server: m.key, params: m.params });
         else if (m.t === 'error') {
-          if (m.fatal) { stopped = true; setFatal(m.message); ws.close(); }
-          else setToast({ id: Date.now(), text: m.message });
+          const note: Note = { id: Date.now(), server: m.code, params: m.params };
+          if (m.fatal) { stopped = true; setFatal(note); ws.close(); }
+          else setToast(note);
         }
       };
       ws.onclose = (e) => {
@@ -92,12 +103,12 @@ export function useRoom(session: Session | null) {
         if (e.code === 4003 || e.code === 4004) {
           stopped = true;
           clearSession(session.code);
-          setFatal(e.code === 4003 ? 'หัวห้องเชิญคุณออกจากห้องแล้ว' : 'คุณถูกนำออกจากเกมเนื่องจากหลุดการเชื่อมต่อ');
+          setFatal({ id: Date.now(), ui: e.code === 4003 ? 'fatal_kicked' : 'fatal_removed' });
           setConn('failed');
           return;
         }
         if (e.code === 4001 || e.code === 4000) {
-          setFatal(e.code === 4001 ? 'ไม่สามารถยืนยันตัวตนในห้องนี้ได้' : 'ห้องหมดอายุแล้ว');
+          setFatal(e.code === 4001 ? { id: Date.now(), server: 'err_auth_failed' } : { id: Date.now(), ui: 'fatal_expired' });
           setConn('failed');
           return;
         }
@@ -131,7 +142,7 @@ export function useRoom(session: Session | null) {
   const send = useCallback((msg: object) => {
     const ws = wsRef.current;
     if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
-    else setToast({ id: Date.now(), text: 'กำลังเชื่อมต่อใหม่ กรุณารอสักครู่' });
+    else setToast({ id: Date.now(), ui: 'wait_reconnect' });
   }, []);
 
   const act = useCallback((action: Action) => {
@@ -148,5 +159,10 @@ export function useRoom(session: Session | null) {
   const forfeit = useCallback(() => send({ t: 'forfeit' }), [send]);
   const removePlayer = useCallback((playerId: string) => send({ t: 'remove_player', playerId }), [send]);
 
-  return { room, conn, toast, fatal, left, act, start, leave, transferHost, kick, skipTurn, removePlayer, forfeit };
+  return { room, conn, toast, fatal, left, cardTicket, act, start, leave, transferHost, kick, skipTurn, removePlayer, forfeit };
+}
+
+/** URL of a (non-public) card image, readable only with this room's signed ticket. */
+export function cardImageUrl(ticket: string | null, lang: 'th' | 'en', cardId: string): string | null {
+  return ticket ? `${API_URL}/cards/${lang}/${cardId}.webp?t=${encodeURIComponent(ticket)}` : null;
 }

@@ -19,7 +19,7 @@ function client(code, token) {
     const m = JSON.parse(e.data);
     if (m.t === 'room') c.room = m.room;
     if (m.t === 'welcome') c.id = m.playerId;
-    if (m.t === 'error') c.errors.push(m.message);
+    if (m.t === 'error') c.errors.push(m.code);
   };
   ws.onclose = (e) => (c.closeCode = e.code);
   c.send = (m) => ws.send(JSON.stringify(m));
@@ -37,9 +37,9 @@ a.send({ t: 'start' });
 await until(() => a.room.status === 'playing');
 
 let err = b.lastError(); b.send({ t: 'remove_player', playerId: c.id });
-check((await err).includes('หัวห้อง'), 'non-host cannot remove players');
+check((await err) === 'err_host_only_remove', 'non-host cannot remove players');
 err = a.lastError(); a.send({ t: 'remove_player', playerId: c.id });
-check((await err).includes('หลุด'), 'cannot remove a connected player');
+check((await err) === 'err_remove_offline_only', 'cannot remove a connected player');
 
 // --- manual removal of C
 c.ws.close();
@@ -48,7 +48,7 @@ let v = a.room.version;
 a.send({ t: 'remove_player', playerId: c.id });
 await until(() => a.room.version > v && a.room.game.players.length === 2);
 check(!a.room.players.some((p) => p.id === c.id), 'C removed from room and game');
-check(a.room.game.log.some((l) => l.text.includes('C ถูกนำออกจากเกม')), 'removal logged');
+check(a.room.game.log.some((l) => l.key === 'player_removed' && l.params.p === 'C'), 'removal logged');
 check(a.room.game.phase !== 'ended', 'game continues with 2 players');
 const reC = client(code, tC);
 await until(() => reC.closeCode !== null);
@@ -71,7 +71,7 @@ for (let i = 0; i < 4 && a.room.status === 'playing'; i++) {
   console.log(`      B skipped — missedTurns=${missed ?? 'removed'}`);
 }
 check(a.room.status === 'ended' && a.room.game.winnerId === a.id, 'B auto-removed after 3 skips → A wins as last player');
-check(a.room.game.log.at(-1).text.includes('ชนะ'), 'victory logged');
+check(a.room.game.log.at(-1).key === 'win', 'victory logged');
 
 for (const x of [a, b, c, reC]) try { x.ws.close(); } catch {}
 console.log(failures ? `\n${failures} FAILED` : '\nALL PASSED');

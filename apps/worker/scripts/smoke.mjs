@@ -18,7 +18,7 @@ function client(code, token) {
     const m = JSON.parse(e.data);
     if (m.t === 'room') c.room = m.room;
     if (m.t === 'welcome') c.playerId = m.playerId;
-    if (m.t === 'error') c.errors.push(m.message);
+    if (m.t === 'error') c.errors.push(m.code);
     if (m.t === 'ack') c.acks.push(m.actionId);
     c.waiters = c.waiters.filter((w) => !w());
   };
@@ -54,7 +54,7 @@ check(true, `${N} clients connected and see each other online`);
 
 clients[1].send({ t: 'start' });
 await clients[1].until(() => clients[1].errors.length > 0);
-check(clients[1].errors.at(-1).includes('หัวห้อง'), 'non-host cannot start');
+check(clients[1].errors.at(-1) === 'err_host_only_start', 'non-host cannot start');
 
 clients[0].send({ t: 'start' });
 await Promise.all(clients.map((c) => c.until(() => c.room?.status === 'playing')));
@@ -82,7 +82,7 @@ async function act(action, who) {
   const before = other.errors.length;
   other.send({ t: 'action', actionId: 'x1', expectedVersion: other.room.version, action: { type: 'pass' } });
   await other.until(() => other.errors.length > before);
-  check(other.errors.at(-1) === 'ยังไม่ถึงเทิร์นของคุณ', 'other player cannot act for active player');
+  check(other.errors.at(-1) === 'err_not_your_turn', 'other player cannot act for active player');
 }
 
 for (let i = 0; i < 3 * N; i++) await act({ type: 'pass' });
@@ -93,7 +93,7 @@ check(clients[0].room.game.phase === 'roll', 'setup rounds complete -> roll phas
   const g = clients[0].room.game;
   const c = byPid(g.players[g.activeIndex].id);
   c.send({ t: 'action', actionId: 'stale', expectedVersion: c.room.version - 1, action: { type: 'roll', dice: 1 } });
-  await c.until(() => c.errors.at(-1)?.includes('เปลี่ยนแปลง'));
+  await c.until(() => c.errors.at(-1) === 'err_stale');
   check(true, 'stale expectedVersion rejected');
   const id = await act({ type: 'roll', dice: 2 }, c);
   const v = c.room.version;

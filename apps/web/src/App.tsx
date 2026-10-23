@@ -3,7 +3,9 @@ import { normalizeCode } from '@mk2/game-engine';
 import { Landing } from './components/Landing';
 import { Lobby } from './components/Lobby';
 import { Board } from './components/Board';
-import { Button, Modal, Toast } from './components/ui';
+import { Button, Modal, Toast, useNoteText } from './components/ui';
+import { CardTicketContext } from './components/Card';
+import { useI18n } from './i18n';
 import { clearSession, loadSession, useRoom, type Session } from './net';
 
 function codeFromHash(): string | null {
@@ -41,7 +43,9 @@ export default function App() {
 }
 
 function RoomScreen({ session, onLeave }: { session: Session; onLeave: () => void }) {
-  const { room, conn, toast, fatal, left, act, start, leave, transferHost, kick, skipTurn, removePlayer, forfeit } = useRoom(session);
+  const { u } = useI18n();
+  const noteText = useNoteText();
+  const { room, conn, toast, fatal, left, cardTicket, act, start, leave, transferHost, kick, skipTurn, removePlayer, forfeit } = useRoom(session);
   const [confirmForfeit, setConfirmForfeit] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
 
@@ -62,8 +66,8 @@ function RoomScreen({ session, onLeave }: { session: Session; onLeave: () => voi
     return (
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl">
-          <p className="mb-4 text-lg">{fatal}</p>
-          <Button onClick={() => { clearSession(session.code); onLeave(); }}>กลับหน้าแรก</Button>
+          <p className="mb-4 text-lg">{noteText(fatal)}</p>
+          <Button onClick={() => { clearSession(session.code); onLeave(); }}>{u('back_home')}</Button>
         </div>
       </div>
     );
@@ -72,12 +76,12 @@ function RoomScreen({ session, onLeave }: { session: Session; onLeave: () => voi
     return (
       <div className="flex min-h-full flex-col items-center justify-center gap-3 text-teal-900">
         <div className="dice-rolling text-5xl">🎲</div>
-        <p>{conn === 'reconnecting' ? 'กำลังเชื่อมต่อใหม่…' : 'กำลังเข้าห้อง…'}</p>
+        <p>{u(conn === 'reconnecting' ? 'reconnecting' : 'entering_room')}</p>
       </div>
     );
   }
   return (
-    <>
+    <CardTicketContext.Provider value={cardTicket}>
       <Toast toast={toast} />
       {room.status === 'lobby' || !room.game
         ? <Lobby room={room} me={session.playerId} onStart={start} onLeave={requestLeave} onTransferHost={transferHost} onKick={kick} />
@@ -85,33 +89,30 @@ function RoomScreen({ session, onLeave }: { session: Session; onLeave: () => voi
       <Modal open={confirmLeave} onClose={() => { setConfirmLeave(false); setConfirmForfeit(false); }}>
         {!confirmForfeit ? (
           <>
-            <h3 className="mb-2 text-xl font-bold">ออกจากเกม?</h3>
-            <p className="mb-5 text-slate-600">
-              ออกชั่วคราว: ที่นั่งยังอยู่ กลับมาเล่นต่อได้ด้วยลิงก์ห้องเดิมบนอุปกรณ์นี้
-              (ถ้าไม่กลับมา เทิร์นของคุณจะถูกข้าม และถูกนำออกเมื่อข้ามครบ 3 เทิร์น)
-            </p>
+            <h3 className="mb-2 text-xl font-bold">{u('leave_game_q')}</h3>
+            <p className="mb-5 text-slate-600">{u('leave_game_body')}</p>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="secondary" onClick={() => setConfirmLeave(false)}>เล่นต่อ</Button>
-              <Button onClick={onLeave}>ออกชั่วคราว</Button>
+              <Button variant="secondary" onClick={() => setConfirmLeave(false)}>{u('keep_playing')}</Button>
+              <Button onClick={onLeave}>{u('leave_temp')}</Button>
             </div>
             <Button variant="ghost" className="mt-2 w-full text-sm text-rose-600" onClick={() => setConfirmForfeit(true)}>
-              🏳️ ยอมแพ้และออกจากเกมถาวร
+              {u('forfeit_link')}
             </Button>
           </>
         ) : (
           <>
-            <h3 className="mb-2 text-xl font-bold">ยอมแพ้?</h3>
+            <h3 className="mb-2 text-xl font-bold">{u('forfeit_q')}</h3>
             <p className="mb-5 text-slate-600">
-              การ์ดทั้งหมดของคุณจะออกจากเกม เหรียญคืนธนาคาร และกลับเข้าเกมนี้ไม่ได้อีก
-              {room.game && room.game.players.length <= 2 && ' — เหลือผู้เล่นอีกคนเดียว เขาจะชนะทันที'}
+              {u('forfeit_body')}
+              {room.game && room.game.players.length <= 2 && u('forfeit_last')}
             </p>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="secondary" onClick={() => setConfirmForfeit(false)}>ย้อนกลับ</Button>
-              <Button variant="danger" onClick={() => { forfeit(); setConfirmLeave(false); setConfirmForfeit(false); }}>ยืนยันยอมแพ้</Button>
+              <Button variant="secondary" onClick={() => setConfirmForfeit(false)}>{u('go_back')}</Button>
+              <Button variant="danger" onClick={() => { forfeit(); setConfirmLeave(false); setConfirmForfeit(false); }}>{u('confirm_forfeit')}</Button>
             </div>
           </>
         )}
       </Modal>
-    </>
+    </CardTicketContext.Provider>
   );
 }

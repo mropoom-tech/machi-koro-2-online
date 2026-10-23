@@ -1,6 +1,7 @@
 import { getCard, getEst, getLandmark, type CardSymbol, type EstablishmentCard, type LandmarkCard } from './cards';
 import type { DeckManifest } from './decks';
 import { randInt, shuffle } from './rng';
+import type { MsgParams } from './i18n';
 
 export const STARTING_COINS = 5;
 export const SETUP_ROUNDS = 3;
@@ -30,7 +31,13 @@ export type PendingChoice =
   | { kind: 'business_center'; playerId: string }
   | { kind: 'moving_company'; playerId: string; toPlayerId: string };
 
-export interface LogEntry { seq: number; text: string; tone?: 'roll' | 'gain' | 'pay' | 'build' | 'info' | 'win' }
+export interface LogEntry {
+  seq: number;
+  /** message key in i18n.ts, rendered by each client in its own language */
+  key: string;
+  params: MsgParams;
+  tone?: 'roll' | 'gain' | 'pay' | 'build' | 'info' | 'win';
+}
 
 export interface RollResult { dice: number[]; total: number; doubles: boolean }
 
@@ -62,7 +69,7 @@ export type Action =
   | { type: 'skip_exchange' }
   | { type: 'give'; cardId: string };
 
-export type ActionResult = { ok: true; state: GameState } | { ok: false; error: string };
+export type ActionResult = { ok: true; state: GameState } | { ok: false; error: string; params?: MsgParams };
 
 export interface ApplyOptions {
   /** Test-only hook. The server never passes this; dice always come from the seeded RNG. */
@@ -77,7 +84,7 @@ export function createGame(
   seed: number,
 ): GameState {
   if (players.length < MIN_PLAYERS || players.length > MAX_PLAYERS) {
-    throw new Error(`ต้องมีผู้เล่น ${MIN_PLAYERS}–${MAX_PLAYERS} คน`);
+    throw new Error('err_players_count');
   }
   const s: GameState = {
     rngState: seed | 0,
@@ -108,7 +115,7 @@ export function createGame(
   }
   s.firstPlayerIndex = randInt(s, s.players.length);
   s.activeIndex = s.firstPlayerIndex;
-  log(s, `เริ่มเกม! ${s.players[s.activeIndex].name} เป็นผู้เล่นคนแรก — ช่วงสร้างกิจการเริ่มต้น ${SETUP_ROUNDS} รอบ`, 'info');
+  log(s, 'game_start', { p: s.players[s.activeIndex].name, rounds: SETUP_ROUNDS }, 'info');
   return s;
 }
 
@@ -129,8 +136,8 @@ function refillRow(s: GameState, row: Row) {
 
 // ---------------------------------------------------------------- helpers
 
-function log(s: GameState, text: string, tone: LogEntry['tone'] = 'info') {
-  s.log.push({ seq: ++s.logSeq, text, tone });
+function log(s: GameState, key: string, params: MsgParams, tone: LogEntry['tone'] = 'info') {
+  s.log.push({ seq: ++s.logSeq, key, params, tone });
   if (s.log.length > LOG_LIMIT) s.log.splice(0, s.log.length - LOG_LIMIT);
 }
 
@@ -211,24 +218,24 @@ export function costOf(s: GameState, p: PlayerState, cardId: string): number {
 
 /** Why a player cannot build this card right now, or null if they can. */
 export function buildBlocker(s: GameState, playerId: string, cardId: string): string | null {
-  if (s.phase !== 'build' && s.phase !== 'setup') return 'ยังไม่ถึงช่วงสร้าง';
+  if (s.phase !== 'build' && s.phase !== 'setup') return 'err_not_build_phase';
   const p = active(s);
-  if (p.id !== playerId) return 'ยังไม่ถึงเทิร์นของคุณ';
-  if (s.builtThisTurn) return 'สร้างได้เทิร์นละ 1 ใบ';
+  if (p.id !== playerId) return 'err_not_your_turn';
+  if (s.builtThisTurn) return 'err_one_build';
   const row = rowOf(cardId);
-  if (!s.market[row].some((m) => m.cardId === cardId && m.count > 0)) return 'การ์ดนี้ไม่มีในตลาด';
+  if (!s.market[row].some((m) => m.cardId === cardId && m.count > 0)) return 'err_not_in_market';
   const card = getCard(cardId);
   if (card.type === 'landmark') {
-    if (s.phase === 'setup') return 'ช่วงเริ่มต้นสร้างได้เฉพาะกิจการ';
-    if (p.landmarks.includes(cardId)) return 'คุณมีแลนด์มาร์กนี้แล้ว';
+    if (s.phase === 'setup') return 'err_setup_est_only';
+    if (p.landmarks.includes(cardId)) return 'err_have_landmark';
     if (card.effect.kind === 'landmark_discount_self') {
       const others = s.players.filter((q) => q.id !== p.id);
       if (p.landmarks.length > 0 || others.some((q) => q.landmarks.length === 0)) {
-        return 'สร้างได้เมื่อคุณเป็นผู้เล่นคนเดียวที่ยังไม่มีแลนด์มาร์ก';
+        return 'err_loan_office';
       }
     }
   }
-  if (costOf(s, p, cardId) > p.coins) return 'เหรียญไม่พอ';
+  if (costOf(s, p, cardId) > p.coins) return 'err_no_coins';
   return null;
 }
 
@@ -240,18 +247,18 @@ export function applyAction(
   action: Action,
   opts: ApplyOptions = {},
 ): ActionResult {
-  if (prev.phase === 'ended') return { ok: false, error: 'เกมจบแล้ว' };
+  if (prev.phase === 'ended') return { ok: false, error: 'err_game_over' };
   const s: GameState = structuredClone(prev);
   const p = active(s);
-  if (!p || p.id !== playerId) return { ok: false, error: 'ยังไม่ถึงเทิร์นของคุณ' };
+  if (!p || p.id !== playerId) return { ok: false, error: 'err_not_your_turn' };
 
   switch (action.type) {
     case 'roll': {
-      if (s.phase !== 'roll') return { ok: false, error: 'ทอยลูกเต๋าไม่ได้ในช่วงนี้' };
-      if (action.dice !== 1 && action.dice !== 2) return { ok: false, error: 'จำนวนลูกเต๋าไม่ถูกต้อง' };
+      if (s.phase !== 'roll') return { ok: false, error: 'err_cannot_roll' };
+      if (action.dice !== 1 && action.dice !== 2) return { ok: false, error: 'err_bad_dice' };
       const dice = opts.diceOverride ?? Array.from({ length: action.dice }, () => randInt(s, 6) + 1);
       if (dice.length !== action.dice || dice.some((d) => !Number.isInteger(d) || d < 1 || d > 6)) {
-        return { ok: false, error: 'ผลลูกเต๋าไม่ถูกต้อง' };
+        return { ok: false, error: 'err_bad_dice' };
       }
       resolveRoll(s, dice);
       return { ok: true, state: s };
@@ -264,27 +271,27 @@ export function applyAction(
       return { ok: true, state: s };
     }
     case 'pass': {
-      if (s.phase !== 'build' && s.phase !== 'setup') return { ok: false, error: 'ยังข้ามไม่ได้ในช่วงนี้' };
-      log(s, `${p.name} ไม่สร้างอะไรในเทิร์นนี้`, 'info');
+      if (s.phase !== 'build' && s.phase !== 'setup') return { ok: false, error: 'err_cannot_pass' };
+      log(s, 'pass', { p: p.name }, 'info');
       endTurn(s);
       return { ok: true, state: s };
     }
     case 'exchange':
     case 'skip_exchange': {
       const pc = s.pending[0];
-      if (s.phase !== 'choice' || pc?.kind !== 'business_center') return { ok: false, error: 'ไม่มีการแลกกิจการที่รอดำเนินการ' };
+      if (s.phase !== 'choice' || pc?.kind !== 'business_center') return { ok: false, error: 'err_no_exchange' };
       if (action.type === 'exchange') {
         const target = byId(s, action.targetPlayerId);
-        if (!target || target.id === p.id) return { ok: false, error: 'เลือกผู้เล่นอื่นไม่ถูกต้อง' };
-        if (!(p.establishments[action.giveCardId] > 0)) return { ok: false, error: 'คุณไม่มีกิจการที่จะแลก' };
-        if (!(target.establishments[action.takeCardId] > 0)) return { ok: false, error: 'ผู้เล่นนั้นไม่มีกิจการนี้' };
+        if (!target || target.id === p.id) return { ok: false, error: 'err_bad_target' };
+        if (!(p.establishments[action.giveCardId] > 0)) return { ok: false, error: 'err_no_card_give' };
+        if (!(target.establishments[action.takeCardId] > 0)) return { ok: false, error: 'err_target_no_card' };
         removeCard(p, action.giveCardId);
         removeCard(target, action.takeCardId);
         addCard(p, action.takeCardId);
         addCard(target, action.giveCardId);
-        log(s, `${p.name} แลก ${getEst(action.giveCardId).nameTh} กับ ${getEst(action.takeCardId).nameTh} ของ ${target.name}`, 'info');
+        log(s, 'exchange', { p: p.name, give: action.giveCardId, take: action.takeCardId, q: target.name }, 'info');
       } else {
-        log(s, `${p.name} ไม่ใช้ความสามารถศูนย์ธุรกิจ`, 'info');
+        log(s, 'exchange_skip', { p: p.name }, 'info');
       }
       s.pending.shift();
       advanceAfterChoices(s);
@@ -292,17 +299,17 @@ export function applyAction(
     }
     case 'give': {
       const pc = s.pending[0];
-      if (s.phase !== 'choice' || pc?.kind !== 'moving_company') return { ok: false, error: 'ไม่มีการมอบกิจการที่รอดำเนินการ' };
+      if (s.phase !== 'choice' || pc?.kind !== 'moving_company') return { ok: false, error: 'err_no_give' };
       const to = byId(s, pc.toPlayerId)!;
-      if (!removeCard(p, action.cardId)) return { ok: false, error: 'คุณไม่มีกิจการนี้' };
+      if (!removeCard(p, action.cardId)) return { ok: false, error: 'err_not_owned' };
       addCard(to, action.cardId);
-      log(s, `${p.name} มอบ ${getEst(action.cardId).nameTh} ให้ ${to.name} (บริษัทขนย้าย)`, 'pay');
+      log(s, 'give', { p: p.name, card: action.cardId, q: to.name }, 'pay');
       s.pending.shift();
       advanceAfterChoices(s);
       return { ok: true, state: s };
     }
     default:
-      return { ok: false, error: 'คำสั่งไม่ถูกต้อง' };
+      return { ok: false, error: 'err_bad_command' };
   }
 }
 
@@ -313,7 +320,7 @@ function resolveRoll(s: GameState, dice: number[]) {
   const doubles = dice.length === 2 && dice[0] === dice[1];
   s.lastRoll = { dice, total, doubles };
   const act = active(s);
-  log(s, `${act.name} ทอยลูกเต๋า ${dice.length} ลูก ได้ ${dice.join(' + ')}${dice.length > 1 ? ` = ${total}` : ''}${doubles ? ' (แต้มเหมือนกัน!)' : ''}`, 'roll');
+  log(s, 'roll', { p: act.name, n: dice.length, dice: dice.join(' + '), total, doubles: doubles ? 1 : 0 }, 'roll');
 
   let activeReceived = 0;
   const matches = (c: EstablishmentCard) => c.activation.includes(total);
@@ -328,7 +335,7 @@ function resolveRoll(s: GameState, dice: number[]) {
       if (card.effect.kind !== 'take_from_active') continue;
       for (let i = 0; i < n; i++) {
         const paid = transfer(s, act, owner, card.effect.amount + symbolBonus(s, card));
-        log(s, `${card.nameTh}: ${act.name} จ่าย ${paid} เหรียญให้ ${owner.name}`, 'pay');
+        log(s, 'pay', { card: card.id, p: act.name, q: owner.name, n: paid }, 'pay');
       }
     }
   }
@@ -346,7 +353,7 @@ function resolveRoll(s: GameState, dice: number[]) {
       if (gain <= 0) continue;
       owner.coins += gain;
       if (owner === act) activeReceived += gain;
-      log(s, `${card.nameTh}${n > 1 ? ` ×${n}` : ''}: ${owner.name} รับ ${gain} เหรียญจากธนาคาร`, 'gain');
+      log(s, 'gain', { card: card.id, x: n, p: owner.name, n: gain }, 'gain');
     }
   }
 
@@ -358,14 +365,14 @@ function resolveRoll(s: GameState, dice: number[]) {
         for (const opp of counterClockwiseFrom(s, s.activeIndex)) {
           const paid = transfer(s, opp, act, e.amount);
           activeReceived += paid;
-          log(s, `${card.nameTh}: ${opp.name} จ่าย ${paid} เหรียญให้ ${act.name}`, 'pay');
+          log(s, 'pay', { card: card.id, p: opp.name, q: act.name, n: paid }, 'pay');
         }
       } else if (e.kind === 'take_half_if_over') {
         for (const opp of counterClockwiseFrom(s, s.activeIndex)) {
           if (opp.coins > e.threshold) {
             const paid = transfer(s, opp, act, Math.floor(opp.coins / 2));
             activeReceived += paid;
-            log(s, `${card.nameTh}: ${opp.name} จ่าย ${paid} เหรียญให้ ${act.name}`, 'pay');
+            log(s, 'pay', { card: card.id, p: opp.name, q: act.name, n: paid }, 'pay');
           }
         }
       } else if (e.kind === 'exchange') {
@@ -378,36 +385,36 @@ function resolveRoll(s: GameState, dice: number[]) {
   const inPlay = (id: string) => landmarkInPlay(s, id);
   if (inPlay('tech_startup') && total === 12) {
     act.coins += 8; activeReceived += 8;
-    log(s, `สตาร์ตอัปเทคโนโลยี: ${act.name} รับ 8 เหรียญจากธนาคาร`, 'gain');
+    log(s, 'gain', { card: 'tech_startup', x: 1, p: act.name, n: 8 }, 'gain');
   }
   if (inPlay('renovation_company') && total === 6) {
     const gain = countSymbol(act, 'cup');
     if (gain > 0) {
       act.coins += gain; activeReceived += gain;
-      log(s, `บริษัทปรับปรุงอาคาร: ${act.name} รับ ${gain} เหรียญจากธนาคาร`, 'gain');
+      log(s, 'gain', { card: 'renovation_company', x: 1, p: act.name, n: gain }, 'gain');
     }
   }
   if (inPlay('temple') && doubles) {
     for (const opp of counterClockwiseFrom(s, s.activeIndex)) {
       const paid = transfer(s, opp, act, 2);
       activeReceived += paid;
-      log(s, `วัด: ${opp.name} จ่าย ${paid} เหรียญให้ ${act.name}`, 'pay');
+      log(s, 'pay', { card: 'temple', p: opp.name, q: act.name, n: paid }, 'pay');
     }
   }
   // "Receive no coins" landmarks are checked after every other income source.
   if (activeReceived === 0) {
     if (dice.length === 2 && inPlay('charterhouse')) {
       act.coins += 3;
-      log(s, `ชาร์เตอร์เฮาส์: ${act.name} ไม่ได้รับเหรียญ จึงรับ 3 เหรียญจากธนาคาร`, 'gain');
+      log(s, 'no_income_bonus', { card: 'charterhouse', p: act.name, n: 3 }, 'gain');
     }
     if (dice.length === 1 && inPlay('city_hall')) {
       act.coins += 2;
-      log(s, `ศาลาว่าการเมือง: ${act.name} ไม่ได้รับเหรียญ จึงรับ 2 เหรียญจากธนาคาร`, 'gain');
+      log(s, 'no_income_bonus', { card: 'city_hall', p: act.name, n: 2 }, 'gain');
     }
   }
   if (doubles && inPlay('amusement_park')) {
     s.extraTurn = true;
-    log(s, `สวนสนุก: ${act.name} จะได้เล่นเพิ่มอีก 1 เทิร์น`, 'info');
+    log(s, 'extra_turn_next', { card: 'amusement_park', p: act.name }, 'info');
   }
   // Moving Company transfer is delayed until every other effect this turn has resolved.
   if (doubles && inPlay('moving_company') && establishmentCount(act) > 0) {
@@ -433,7 +440,7 @@ function advanceAfterChoices(s: GameState) {
   const act = active(s);
   if (act.coins === 0) {
     act.coins = 1;
-    log(s, `${act.name} ไม่มีเหรียญเลย จึงรับ 1 เหรียญจากธนาคาร`, 'gain');
+    log(s, 'zero_coin', { p: act.name }, 'gain');
   }
 }
 
@@ -452,14 +459,14 @@ function doBuild(s: GameState, p: PlayerState, cardId: string) {
 
   if (card.type === 'establishment') {
     addCard(p, cardId);
-    log(s, `${p.name} สร้าง ${card.nameTh} (${cost} เหรียญ)`, 'build');
+    log(s, 'build', { p: p.name, card: cardId, n: cost }, 'build');
     return;
   }
   p.landmarks.push(cardId);
-  log(s, `${p.name} สร้างแลนด์มาร์ก ${card.nameTh} (${cost} เหรียญ)`, 'build');
+  log(s, 'build_landmark', { p: p.name, card: cardId, n: cost }, 'build');
   applyImmediate(s, p, card);
   if (s.phase === 'ended') return;
-  if (p.landmarks.length >= LANDMARKS_TO_WIN) win(s, p, 'สร้างแลนด์มาร์กครบ 3 แห่ง');
+  if (p.landmarks.length >= LANDMARKS_TO_WIN) win(s, p, 'reason_three');
 }
 
 function applyImmediate(s: GameState, p: PlayerState, card: LandmarkCard) {
@@ -469,7 +476,7 @@ function applyImmediate(s: GameState, p: PlayerState, card: LandmarkCard) {
   const take = (opp: PlayerState, amount: number) => {
     if (amount <= 0) return;
     const paid = transfer(s, opp, p, amount);
-    log(s, `${card.nameTh}: ${opp.name} จ่าย ${paid} เหรียญให้ ${p.name}`, 'pay');
+    log(s, 'pay', { card: card.id, p: opp.name, q: p.name, n: paid }, 'pay');
   };
   switch (e.kind) {
     case 'take_half_if_over':
@@ -492,15 +499,15 @@ function applyImmediate(s: GameState, p: PlayerState, card: LandmarkCard) {
       const totalCoins = s.players.reduce((a, q) => a + q.coins, 0);
       const each = Math.ceil(totalCoins / s.players.length);
       for (const q of s.players) q.coins = each;
-      log(s, `สวนสาธารณะ: แจกเหรียญใหม่ ทุกคนได้ ${each} เหรียญ`, 'info');
+      log(s, 'park', { n: each }, 'info');
       break;
     }
     case 'extra_turn':
       s.extraTurn = true;
-      log(s, `หอส่งสัญญาณวิทยุ: ${p.name} จะได้เล่นเพิ่มอีก 1 เทิร์น`, 'info');
+      log(s, 'extra_turn_next', { card: 'radio_tower', p: p.name }, 'info');
       break;
     case 'win':
-      win(s, p, 'สร้างฐานปล่อยจรวดสำเร็จ');
+      win(s, p, 'reason_launch');
       break;
     default:
       break; // ongoing effects are evaluated where they apply
@@ -512,7 +519,7 @@ function win(s: GameState, p: PlayerState, reason: string) {
   s.winnerId = p.id;
   s.extraTurn = false;
   s.pending = [];
-  log(s, `🏆 ${p.name} ชนะเกม! (${reason})`, 'win');
+  log(s, 'win', { p: p.name, reason }, 'win');
 }
 
 // ---------------------------------------------------------------- turn flow
@@ -527,17 +534,17 @@ function endTurn(s: GameState) {
       s.setupRound++;
       if (s.setupRound > SETUP_ROUNDS) {
         s.phase = 'roll';
-        log(s, `จบช่วงเริ่มต้น — เริ่มเทิร์นปกติ ตาของ ${active(s).name}`, 'info');
+        log(s, 'setup_done', { p: active(s).name }, 'info');
       }
     }
     return;
   }
   if (!s.builtThisTurn && landmarkInPlay(s, 'airport')) {
     p.coins += 5;
-    log(s, `สนามบิน: ${p.name} ไม่ได้สร้างอะไร จึงรับ 5 เหรียญจากธนาคาร`, 'gain');
+    log(s, 'no_build_bonus', { card: 'airport', p: p.name, n: 5 }, 'gain');
   }
   if (s.extraTurn) {
-    log(s, `${p.name} เล่นเทิร์นเพิ่ม`, 'info');
+    log(s, 'extra_turn', { p: p.name }, 'info');
   } else {
     s.activeIndex = (s.activeIndex + 1) % s.players.length;
   }
@@ -559,7 +566,7 @@ export function forceSkipTurn(prev: GameState): GameState {
   if (prev.phase === 'ended') return prev;
   const s: GameState = structuredClone(prev);
   const p = active(s);
-  log(s, `⏭️ ข้ามเทิร์นของ ${p.name} (หลุดการเชื่อมต่อ)`, 'info');
+  log(s, 'skip_turn', { p: p.name }, 'info');
   s.extraTurn = false;
   if (s.phase === 'setup') { endTurn(s); return s; }
   if (s.phase === 'roll') {
@@ -577,7 +584,7 @@ export function forceSkipTurn(prev: GameState): GameState {
         const to = byId(s, pc.toPlayerId)!;
         removeCard(p, cardId);
         addCard(to, cardId);
-        log(s, `${p.name} มอบ ${getEst(cardId).nameTh} ให้ ${to.name} (บริษัทขนย้าย — ระบบเลือกให้)`, 'pay');
+        log(s, 'give_auto', { p: p.name, card: cardId, q: to.name }, 'pay');
       }
     }
     advanceAfterChoices(s);
@@ -597,12 +604,10 @@ export function removePlayer(prev: GameState, playerId: string, reason: 'removed
   const s: GameState = structuredClone(prev);
   const [gone] = s.players.splice(idx, 1);
   const n = s.players.length;
-  log(s, reason === 'forfeit'
-    ? `🏳️ ${gone.name} ยอมแพ้ — การ์ดทั้งหมดออกจากเกม เหรียญคืนธนาคาร`
-    : `🚪 ${gone.name} ถูกนำออกจากเกม — การ์ดทั้งหมดออกจากเกม เหรียญคืนธนาคาร`, 'info');
+  log(s, reason === 'forfeit' ? 'player_forfeit' : 'player_removed', { p: gone.name }, 'info');
 
   if (n < MIN_PLAYERS) {
-    win(s, s.players[0], 'ผู้เล่นคนอื่นออกจากเกมทั้งหมด');
+    win(s, s.players[0], 'reason_last');
     s.activeIndex = 0;
     return s;
   }

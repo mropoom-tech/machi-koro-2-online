@@ -22,7 +22,7 @@ function client(code, token) {
   c.request = async (action) => {
     for (;;) {
       const ok = await c.once(action);
-      if (ok || !c.lastErr?.message.includes('เร็วเกินไป')) return ok;
+      if (ok || c.lastErr?.code !== 'err_rate') return ok;
       await new Promise((r) => setTimeout(r, 400));
     }
   };
@@ -71,7 +71,7 @@ const winner = g.players.find((p) => p.id === g.winnerId);
 console.log(`room ${code}: ${actions} actions, turn ${g.turn}, phase=${g.phase}, status=${cs[0].room.status}`);
 console.log(`winner: ${winner?.name} with landmarks [${winner?.landmarks.join(', ')}]`);
 console.log(`special prompts seen: ${[...seen].join(', ')}`);
-console.log(g.log.slice(-4).map((l) => '  ' + l.text).join('\n'));
+console.log(g.log.slice(-4).map((l) => '  ' + l.key + ' ' + JSON.stringify(l.params)).join('\n'));
 const blocked = !(await cs[0].request({ type: 'pass' })) && !(await cs[1].request({ type: 'roll', dice: 1 }));
 console.log(blocked ? 'PASS  actions rejected after game end' : 'FAIL  actions accepted after end');
 const sync = cs.every((c) => c.room.version === cs[0].room.version && c.room.game.winnerId === g.winnerId);

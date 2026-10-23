@@ -1,9 +1,10 @@
 import { DurableObject } from 'cloudflare:workers';
 import {
   applyAction, createGame, DEMO_DECK, forceSkipTurn, removePlayer, MAX_MISSED_TURNS, MAX_PLAYERS, MIN_PLAYERS, parseClientMessage, sanitizeName, toPublic, verifiedDeck,
-  type DeckManifest, type GameState, type RoomView, type ServerMessage,
+  type DeckManifest, type GameState, type MsgParams, type RoomView, type ServerMessage,
 } from '@mk2/game-engine';
 import type { Env } from './index';
+import { issueCardTicket } from './tickets';
 
 interface StoredPlayer { id: string; name: string; tokenHash: string }
 interface Meta {
@@ -100,7 +101,7 @@ export class GameRoom extends DurableObject<Env> {
     m.skipStreak = { ...m.skipStreak, [pid]: (m.skipStreak?.[pid] ?? 0) + 1 };
     m.version++;
     if (m.skipStreak[pid] >= MAX_MISSED_TURNS) {
-      return this.removeFromGame(pid, `ถูกข้าม ${MAX_MISSED_TURNS} เทิร์นติดกัน`);
+      return this.removeFromGame(pid, 'r_skipped');
     }
     await this.persist();
     this.broadcastRoom();
@@ -122,7 +123,8 @@ export class GameRoom extends DurableObject<Env> {
     }
     if (this.game.phase === 'ended') m.status = 'ended';
     m.version++;
-    this.notice(forfeit ? `🏳️ ${name} ยอมแพ้และออกจากเกม` : `🚪 ${name} ถูกนำออกจากเกม (${reason})`);
+    if (forfeit) this.notice('n_forfeit', { p: name });
+    else this.notice('n_removed', { p: name, reason, n: MAX_MISSED_TURNS });
     if (m.hostId === pid && this.players.length > 0) {
       const online = this.connectedIds();
       this.setHost((this.players.find((p) => online.has(p.id)) ?? this.players[0]).id, 'left');
@@ -169,12 +171,12 @@ export class GameRoom extends DurableObject<Env> {
     m.hostOfflineSince = null;
     m.version++;
     const name = this.players.find((p) => p.id === playerId)?.name ?? '';
-    const why = reason === 'auto' ? ' (หัวห้องเดิมหลุดการเชื่อมต่อ)' : reason === 'left' ? ' (หัวห้องเดิมออกจากห้อง)' : '';
-    this.notice(`👑 ${name} เป็นหัวห้องคนใหม่${why}`);
+    const why = reason === 'auto' ? 'why_auto' : reason === 'left' ? 'why_left' : '';
+    this.notice('n_new_host', { p: name, why });
   }
 
-  private notice(text: string) {
-    const data = JSON.stringify({ t: 'notice', text } satisfies ServerMessage);
+  private notice(key: string, params: MsgParams) {
+    const data = JSON.stringify({ t: 'notice', key, params } satisfies ServerMessage);
     for (const ws of this.ctx.getWebSockets()) {
       const a = ws.deserializeAttachment() as Attachment | null;
       if (a?.playerId) try { ws.send(data); } catch { /* ignore */ }
@@ -199,21 +201,21 @@ export class GameRoom extends DurableObject<Env> {
     if (url.pathname === '/create' && req.method === 'POST') {
       if (this.meta) return json({ error: 'exists' }, 409);
       const name = sanitizeName(((await req.json()) as any)?.name);
-      if (!name) return json({ error: 'กรุณาใส่ชื่อเล่น' }, 400);
+      if (!name) return json({ error: 'err_need_name' }, 400);
       const { token, playerId } = await this.addPlayer(name);
       this.meta = { code, hostId: playerId, status: 'lobby', version: 1, createdAt: Date.now() };
       await this.persist();
       return json({ code, token, playerId });
     }
 
-    if (!this.meta) return json({ error: 'ไม่พบห้องนี้' }, 404);
+    if (!this.meta) return json({ error: 'err_room_not_found' }, 404);
 
     if (url.pathname === '/join' && req.method === 'POST') {
       const name = sanitizeName(((await req.json()) as any)?.name);
-      if (!name) return json({ error: 'กรุณาใส่ชื่อเล่น' }, 400);
-      if (this.meta.status !== 'lobby') return json({ error: 'เกมเริ่มไปแล้ว เข้าร่วมใหม่ไม่ได้' }, 409);
-      if (this.players.length >= MAX_PLAYERS) return json({ error: `ห้องเต็มแล้ว (สูงสุด ${MAX_PLAYERS} คน)` }, 409);
-      if (this.players.some((p) => p.name === name)) return json({ error: 'มีผู้เล่นใช้ชื่อนี้แล้ว' }, 409);
+      if (!name) return json({ error: 'err_need_name' }, 400);
+      if (this.meta.status !== 'lobby') return json({ error: 'err_game_started_join' }, 409);
+      if (this.players.length >= MAX_PLAYERS) return json({ error: 'err_room_full', params: { max: MAX_PLAYERS } }, 409);
+      if (this.players.some((p) => p.name === name)) return json({ error: 'err_name_taken' }, 409);
       const res = await this.addPlayer(name);
       this.meta.version++;
       await this.persist();
@@ -289,10 +291,10 @@ export class GameRoom extends DurableObject<Env> {
 
   async webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer) {
     if (typeof raw !== 'string') return;
-    if (!this.allow(ws)) return this.send(ws, { t: 'error', message: 'ส่งคำสั่งเร็วเกินไป' });
+    if (!this.allow(ws)) return this.send(ws, { t: 'error', code: 'err_rate' });
     const msg = parseClientMessage(raw);
-    if (!msg) return this.send(ws, { t: 'error', message: 'ข้อความไม่ถูกต้อง' });
-    if (!this.meta) return this.send(ws, { t: 'error', message: 'ไม่พบห้องนี้', fatal: true });
+    if (!msg) return this.send(ws, { t: 'error', code: 'err_bad_message' });
+    if (!this.meta) return this.send(ws, { t: 'error', code: 'err_room_not_found', fatal: true });
 
     const att = (ws.deserializeAttachment() as Attachment | null) ?? { playerId: null };
 
@@ -302,11 +304,11 @@ export class GameRoom extends DurableObject<Env> {
       const hash = await sha256(msg.token);
       const p = this.players.find((x) => x.tokenHash === hash);
       if (!p) {
-        this.send(ws, { t: 'error', message: 'ไม่สามารถยืนยันตัวตนในห้องนี้ได้', fatal: true });
+        this.send(ws, { t: 'error', code: 'err_auth_failed', fatal: true });
         return ws.close(4001, 'unauthorized');
       }
       ws.serializeAttachment({ playerId: p.id } satisfies Attachment);
-      this.send(ws, { t: 'welcome', playerId: p.id });
+      this.send(ws, { t: 'welcome', playerId: p.id, cardTicket: await issueCardTicket(this.env.CARD_SIGNING_KEY, this.meta.code) });
       let dirty = false;
       if (p.id === this.meta.hostId && this.meta.hostOfflineSince) { this.meta.hostOfflineSince = null; dirty = true; }
       if (this.meta.offlineSince?.[p.id]) { delete this.meta.offlineSince[p.id]; dirty = true; }
@@ -317,12 +319,12 @@ export class GameRoom extends DurableObject<Env> {
     }
 
     const playerId = att.playerId;
-    if (!playerId) return this.send(ws, { t: 'error', message: 'ยังไม่ได้ยืนยันตัวตน' });
+    if (!playerId) return this.send(ws, { t: 'error', code: 'err_not_authed' });
 
     if (msg.t === 'transfer_host') {
-      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', message: 'เฉพาะหัวห้องเท่านั้นที่มอบตำแหน่งได้' });
+      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', code: 'err_host_only_transfer' });
       if (!this.players.some((p) => p.id === msg.playerId) || msg.playerId === playerId) {
-        return this.send(ws, { t: 'error', message: 'เลือกผู้เล่นไม่ถูกต้อง' });
+        return this.send(ws, { t: 'error', code: 'err_bad_target' });
       }
       this.setHost(msg.playerId, 'manual');
       await this.persist();
@@ -331,10 +333,10 @@ export class GameRoom extends DurableObject<Env> {
     }
 
     if (msg.t === 'kick') {
-      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', message: 'เฉพาะหัวห้องเท่านั้นที่เชิญผู้เล่นออกได้' });
-      if (this.meta.status !== 'lobby') return this.send(ws, { t: 'error', message: 'เชิญผู้เล่นออกได้เฉพาะก่อนเริ่มเกม' });
+      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', code: 'err_host_only_kick' });
+      if (this.meta.status !== 'lobby') return this.send(ws, { t: 'error', code: 'err_kick_lobby_only' });
       const target = this.players.find((p) => p.id === msg.playerId);
-      if (!target || target.id === playerId) return this.send(ws, { t: 'error', message: 'เลือกผู้เล่นไม่ถูกต้อง' });
+      if (!target || target.id === playerId) return this.send(ws, { t: 'error', code: 'err_bad_target' });
       this.players = this.players.filter((p) => p.id !== target.id);
       for (const s of this.ctx.getWebSockets()) {
         if ((s.deserializeAttachment() as Attachment | null)?.playerId === target.id) {
@@ -343,33 +345,33 @@ export class GameRoom extends DurableObject<Env> {
         }
       }
       this.meta.version++;
-      this.notice(`${target.name} ถูกเชิญออกจากห้อง`);
+      this.notice('n_kicked', { p: target.name });
       await this.persist();
       this.broadcastRoom();
       return;
     }
 
     if (msg.t === 'skip_turn') {
-      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', message: 'เฉพาะหัวห้องเท่านั้นที่ข้ามเทิร์นได้' });
-      if (!this.activeOfflineSince()) return this.send(ws, { t: 'error', message: 'ข้ามได้เฉพาะเมื่อผู้เล่นที่ถึงตาหลุดการเชื่อมต่อ' });
+      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', code: 'err_host_only_skip' });
+      if (!this.activeOfflineSince()) return this.send(ws, { t: 'error', code: 'err_skip_offline_only' });
       await this.skipActive();
       return;
     }
 
     if (msg.t === 'forfeit') {
-      if (this.meta.status !== 'playing' || !this.game) return this.send(ws, { t: 'error', message: 'ยอมแพ้ได้เฉพาะระหว่างเกม' });
-      await this.removeFromGame(playerId, 'ยอมแพ้', true);
+      if (this.meta.status !== 'playing' || !this.game) return this.send(ws, { t: 'error', code: 'err_forfeit_game_only' });
+      await this.removeFromGame(playerId, 'forfeit', true);
       return;
     }
 
     if (msg.t === 'remove_player') {
-      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', message: 'เฉพาะหัวห้องเท่านั้นที่นำผู้เล่นออกได้' });
-      if (this.meta.status !== 'playing' || !this.game) return this.send(ws, { t: 'error', message: 'นำผู้เล่นออกได้เฉพาะระหว่างเกม' });
+      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', code: 'err_host_only_remove' });
+      if (this.meta.status !== 'playing' || !this.game) return this.send(ws, { t: 'error', code: 'err_remove_game_only' });
       if (msg.playerId === playerId || !this.game.players.some((p) => p.id === msg.playerId)) {
-        return this.send(ws, { t: 'error', message: 'เลือกผู้เล่นไม่ถูกต้อง' });
+        return this.send(ws, { t: 'error', code: 'err_bad_target' });
       }
-      if (this.connectedIds().has(msg.playerId)) return this.send(ws, { t: 'error', message: 'นำออกได้เฉพาะผู้เล่นที่หลุดการเชื่อมต่อ' });
-      await this.removeFromGame(msg.playerId, 'หัวห้องนำออก');
+      if (this.connectedIds().has(msg.playerId)) return this.send(ws, { t: 'error', code: 'err_remove_offline_only' });
+      await this.removeFromGame(msg.playerId, 'r_host_removed');
       return;
     }
 
@@ -397,9 +399,9 @@ export class GameRoom extends DurableObject<Env> {
     }
 
     if (msg.t === 'start') {
-      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', message: 'เฉพาะหัวห้องเท่านั้นที่เริ่มเกมได้' });
-      if (this.meta.status !== 'lobby') return this.send(ws, { t: 'error', message: 'เกมเริ่มไปแล้ว' });
-      if (this.players.length < MIN_PLAYERS) return this.send(ws, { t: 'error', message: `ต้องมีผู้เล่นอย่างน้อย ${MIN_PLAYERS} คน` });
+      if (playerId !== this.meta.hostId) return this.send(ws, { t: 'error', code: 'err_host_only_start' });
+      if (this.meta.status !== 'lobby') return this.send(ws, { t: 'error', code: 'err_already_started' });
+      if (this.players.length < MIN_PLAYERS) return this.send(ws, { t: 'error', code: 'err_min_players', params: { min: MIN_PLAYERS } });
       const seed = crypto.getRandomValues(new Uint32Array(1))[0];
       this.game = createGame(this.players.map(({ id, name }) => ({ id, name })), this.deck(), seed);
       this.meta.status = 'playing';
@@ -411,13 +413,13 @@ export class GameRoom extends DurableObject<Env> {
 
     if (msg.t === 'action') {
       if (this.processed.includes(msg.actionId)) return this.send(ws, { t: 'ack', actionId: msg.actionId }); // idempotent retry
-      if (!this.game) return this.send(ws, { t: 'error', message: 'เกมยังไม่เริ่ม', actionId: msg.actionId });
+      if (!this.game) return this.send(ws, { t: 'error', code: 'err_not_started', actionId: msg.actionId });
       if (msg.expectedVersion !== this.meta.version) {
-        this.send(ws, { t: 'error', message: 'สถานะเกมมีการเปลี่ยนแปลง กรุณาลองอีกครั้ง', actionId: msg.actionId });
+        this.send(ws, { t: 'error', code: 'err_stale', actionId: msg.actionId });
         return this.send(ws, { t: 'room', room: this.view() });
       }
       const r = applyAction(this.game, playerId, msg.action);
-      if (!r.ok) return this.send(ws, { t: 'error', message: r.error, actionId: msg.actionId });
+      if (!r.ok) return this.send(ws, { t: 'error', code: r.error, params: r.params, actionId: msg.actionId });
       this.game = r.state;
       if (r.state.phase === 'ended') this.meta.status = 'ended';
       this.meta.version++;
