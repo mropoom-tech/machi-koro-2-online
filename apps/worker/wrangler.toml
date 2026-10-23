@@ -4,7 +4,7 @@ compatibility_date = "2024-12-01"
 
 [vars]
 # Set to your GitHub Pages origin before deploying, e.g. "https://<user>.github.io"
-ALLOWED_ORIGINS = "*"
+ALLOWED_ORIGINS = "https://mropoom-tech.github.io"
 
 [[durable_objects.bindings]]
 name = "GAME_ROOM"
