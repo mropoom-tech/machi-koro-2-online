@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { getVolume, isMuted, playBuild, playCoin, playDiceRoll, playLandmark, playYourTurn, setMuted, setVolume } from '../sound';
+import { getVolume, isMuted, playBuild, playCoin, playDiceRoll, playLandmark, playVictory, playYourTurn, setMuted, setVolume } from '../sound';
 import { useI18n } from '../i18n';
 
 /** Header button that opens a small panel: volume slider, − / + buttons, mute, and test sounds. */
@@ -67,6 +67,8 @@ export function SoundSettings() {
               className="rounded-lg bg-teal-50 px-2 py-1.5 font-medium text-teal-800 hover:bg-teal-100 disabled:opacity-40">🔨 {u('test_build')}</button>
             <button type="button" onClick={() => playLandmark()} disabled={muted}
               className="col-span-2 rounded-lg bg-teal-50 px-2 py-1.5 font-medium text-teal-800 hover:bg-teal-100 disabled:opacity-40">🏛️ {u('test_landmark')}</button>
+            <button type="button" onClick={() => playVictory()} disabled={muted}
+              className="col-span-3 rounded-lg bg-amber-50 px-2 py-1.5 font-medium text-amber-800 hover:bg-amber-100 disabled:opacity-40">🏆 {u('test_victory')}</button>
           </div>
         </div>
       )}

@@ -5,7 +5,7 @@ import {
 } from '@mk2/game-engine';
 import { CardDetail, CardTile, SymbolSummary } from './Card';
 import { Button, Coin, DemoBadge, Modal, ScrollRow } from './ui';
-import { playBuild, playCoin, playDiceRoll, playLandmark, playYourTurn } from '../sound';
+import { playBuild, playCoin, playDiceRoll, playGameOver, playLandmark, playVictory, playYourTurn } from '../sound';
 import { SoundSettings } from './SoundSettings';
 import { LangToggle, useI18n, type UiKey } from '../i18n';
 import type { ConnState } from '../net';
@@ -384,6 +384,14 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
     if (fresh.some((e) => e.key === 'build_landmark')) playLandmark();
     else if (fresh.some((e) => e.key === 'build')) playBuild();
   }, [lastSeq]);
+
+  // End-of-game sound, once, when the victory screen appears (after the final roll is revealed).
+  const winnerId = winner?.id ?? null;
+  const prevWinner = useRef(winnerId); // no sound when reopening a game that had already ended
+  useEffect(() => {
+    if (winnerId && !prevWinner.current) (winnerId === me ? playVictory : playGameOver)();
+    prevWinner.current = winnerId;
+  }, [winnerId]);
 
   // Coin sound when *my* displayed coins go up (after the dice reveal, so it lines up with the number).
   const myCoins = meP?.coins ?? 0;

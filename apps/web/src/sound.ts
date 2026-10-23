@@ -143,3 +143,22 @@ export function playLandmark() {
   knock(ac, t + 0.14, 0.35);
   [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(ac, f, t + 0.32 + i * 0.1, 0.45, 0.18)); // C E G C
 }
+
+/** You won: triumphant fanfare (arpeggio, then a held chord). */
+export function playVictory() {
+  const ac = audio();
+  if (!ac) return;
+  const t = ac.currentTime;
+  const notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6
+  notes.forEach((f, i) => tone(ac, f, t + i * 0.13, 0.3, 0.2));
+  tone(ac, 783.99, t + 0.6, 0.25, 0.18);
+  [523.25, 659.25, 783.99, 1046.5].forEach((f) => tone(ac, f, t + 0.85, 1.6, 0.14)); // final chord
+}
+
+/** Someone else won: short, gentle descending "game over" phrase. */
+export function playGameOver() {
+  const ac = audio();
+  if (!ac) return;
+  const t = ac.currentTime;
+  [783.99, 659.25, 523.25].forEach((f, i) => tone(ac, f, t + i * 0.18, 0.5, 0.14)); // G E C
+}
