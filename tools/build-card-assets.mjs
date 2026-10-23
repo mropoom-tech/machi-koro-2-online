@@ -12,7 +12,7 @@ const proofDir = proofIdx > 0 ? process.argv[proofIdx + 1] : null;
 const WIDTH = 480;
 // Thai art whose printed text is still wrong (docs/CARD_IMAGE_PROOFREAD.md): the Thai version of the
 // game shows the English original for these until corrected art arrives.
-const THAI_ART_WRONG = new Set(['moving_company', 'publisher', 'museum', 'shopping_mall', 'soda_bottling_plant', 'renovation_company']);
+const THAI_ART_WRONG = new Set([]);
 const isImage = (f) => /\.(png|jpe?g|webp)$/i.test(f); // folders may also hold notes (.txt)
 
 const jobs = [];
