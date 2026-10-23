@@ -9,3 +9,4 @@ reference_assets/
 ~$*
 asset/
 apps/worker/card-assets/
+*.pdf

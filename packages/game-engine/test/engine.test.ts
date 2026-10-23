@@ -154,6 +154,21 @@ describe('income activation', () => {
     expect(s.players[0].coins).toBe(1); // reached 0 then got build-step coin
   });
 
+  it('Rulebook p.7 example: unpaid deficit is ignored, the bank does NOT make up the difference', () => {
+    // Gabrielle (p0) rolls 3 with 3 coins; Tomoko (p2, counter-clockwise first) has 1 Café, Ezra (p1) has 2.
+    let s = game(3);
+    s.players[0].coins = 3;
+    s.players[1].establishments = { cafe: 2 };
+    s.players[2].establishments = { cafe: 1 };
+    const bankBefore = s.players.reduce((a, p) => a + p.coins, 0);
+    s = act(s, 'p0', { type: 'roll', dice: 1 }, [3]);
+    expect(s.players[2].coins).toBe(2); // Tomoko paid in full first
+    expect(s.players[1].coins).toBe(1); // Ezra owed 4, receives only 1
+    // no coins were created: only the build-step "0 coins → 1 coin" rule adds money
+    expect(s.players.reduce((a, p) => a + p.coins, 0)).toBe(bankBefore + 1);
+    expect(s.players[0].coins).toBe(1);
+  });
+
   it('red resolves before green income', () => {
     let s = game(2);
     s.players[0].establishments = { bakery: 1 };
