@@ -161,10 +161,6 @@ const UI = {
     th: 'สร้างได้เมื่อคุณเป็นผู้เล่นคนเดียวที่ยังไม่มีแลนด์มาร์ก',
     en: 'You can only build this when you are the only player with no landmarks',
   },
-  image_issue: {
-    th: '⚠️ ข้อความบนภาพการ์ดใบนี้ยังไม่ถูกต้อง ให้ยึดตามข้อความด้านล่าง',
-    en: '⚠️ The text printed on this card image is inaccurate — use the text below',
-  },
   copies: { th: (p) => `${p.n} ใบ`, en: (p) => `${p.n} copies` },
   sound_settings: { th: 'ตั้งค่าเสียง', en: 'Sound settings' },
   volume: { th: 'ระดับเสียง', en: 'Volume' },
@@ -189,11 +185,6 @@ const SYMBOL: Record<CardSymbol, { th: string; en: string }> = {
   shop: { th: 'ร้านค้า', en: 'Shop' }, flower: { th: 'ดอกไม้', en: 'Flower' }, gear: { th: 'เฟือง', en: 'Gear' },
   tower: { th: 'อาคารเสา', en: 'Major' }, combo: { th: 'คอมโบ (ไม่มีสัญลักษณ์)', en: 'Combo (no symbol)' },
 };
-
-/** Thai card images whose printed text is wrong or incomplete (docs/CARD_IMAGE_PROOFREAD.md). */
-export const TH_IMAGE_ISSUES = new Set([
-  'publisher', 'moving_company', 'museum', 'shopping_mall', 'soda_bottling_plant', 'renovation_company', 'charterhouse',
-]);
 
 const STORAGE_KEY = 'mk2:lang';
 function initialLang(): Lang {

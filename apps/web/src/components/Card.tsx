@@ -1,6 +1,6 @@
 import { createContext, useContext, useState } from 'react';
 import { getCard, type Card as CardData, type CardSymbol } from '@mk2/game-engine';
-import { TH_IMAGE_ISSUES, useI18n, type UiKey } from '../i18n';
+import { useI18n, type UiKey } from '../i18n';
 import { cardImageUrl } from '../net';
 
 // Matches the icons printed on the cards (see docs/RULE_ISSUES.md — symbols).
@@ -167,9 +167,6 @@ export function CardDetail({ cardId }: { cardId: string }) {
           </>
         )}
       </div>
-      {img && lang === 'th' && TH_IMAGE_ISSUES.has(cardId) && (
-        <p className="mb-2 rounded-lg bg-amber-50 p-2 text-sm text-amber-900 ring-1 ring-amber-200">{u('image_issue')}</p>
-      )}
       <p className="font-body text-base leading-relaxed">{effect(cardId)}</p>
       {c.type === 'landmark' && c.buildConditionTh && (
         <p className="mt-2 rounded-lg bg-amber-50 p-2 text-sm text-amber-900">{u('condition')}: {u('loan_condition')}</p>

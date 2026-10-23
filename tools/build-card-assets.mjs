@@ -10,6 +10,9 @@ const OUT = 'apps/worker/card-assets';
 const proofIdx = process.argv.indexOf('--proof');
 const proofDir = proofIdx > 0 ? process.argv[proofIdx + 1] : null;
 const WIDTH = 480;
+// Thai art whose printed text is still wrong (docs/CARD_IMAGE_PROOFREAD.md): the Thai version of the
+// game shows the English original for these until corrected art arrives.
+const THAI_ART_WRONG = new Set(['moving_company', 'publisher', 'museum', 'shopping_mall', 'soda_bottling_plant', 'renovation_company']);
 const isImage = (f) => /\.(png|jpe?g|webp)$/i.test(f); // folders may also hold notes (.txt)
 
 const jobs = [];
@@ -18,9 +21,13 @@ for (const kind of ['establishments', 'landmarks']) {
     jobs.push({ lang: 'en', id: basename(f).replace(/\.\w+$/, ''), file: join(SRC, 'original', kind, f) });
   }
   for (const f of readdirSync(join(SRC, 'thai_previews', kind)).filter(isImage)) {
-    jobs.push({ lang: 'th', id: basename(f).replace(/_TH\.\w+$/, ''), file: join(SRC, 'thai_previews', kind, f) });
+    const id = basename(f).replace(/_TH\.\w+$/, '');
+    if (THAI_ART_WRONG.has(id)) continue;
+    jobs.push({ lang: 'th', id, file: join(SRC, 'thai_previews', kind, f) });
   }
 }
+// English originals stand in for the Thai art listed in THAI_ART_WRONG.
+for (const j of jobs.filter((x) => x.lang === 'en' && THAI_ART_WRONG.has(x.id))) jobs.push({ ...j, lang: 'th' });
 for (const lang of ['th', 'en']) mkdirSync(join(OUT, lang), { recursive: true });
 if (proofDir) mkdirSync(proofDir, { recursive: true });
 

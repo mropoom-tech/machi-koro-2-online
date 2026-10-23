@@ -181,7 +181,7 @@
     "name_en": "Charterhouse",
     "name_th": "ชาร์เตอร์เฮาส์",
     "effect_en": "If you roll 2 dice and receive no coins, get 3 coins from the bank. (all players)",
-    "effect_th": "หากคุณทอยลูกเต๋า 2 ลูกและไม่ได้รับเหรียญเลย รับ 3 เหรียญจากธนาคาร (มีผลกับผู้เล่นทุกคน)"
+    "effect_th": "หากคุณทอยลูกเต๋า 2 ลูกแล้วไม่ได้รับเหรียญ คุณจะได้รับ 3 เหรียญจากธนาคาร (ผู้เล่นทุกคน)"
   },
   {
     "id": "exhibit_hall",
@@ -189,7 +189,7 @@
     "name_en": "Exhibit Hall",
     "name_th": "หอจัดแสดง",
     "effect_en": "From each opponent who has more than 10 coins, take half, rounded down. (builder only)",
-    "effect_th": "รับเหรียญจากผู้เล่นอื่นแต่ละคนที่มีมากกว่า 10 เหรียญ เป็นจำนวนครึ่งหนึ่งของเหรียญที่ผู้เล่นคนนั้นมี โดยปัดเศษลง (เฉพาะผู้สร้าง)"
+    "effect_th": "จากผู้เล่นฝ่ายตรงข้ามแต่ละคนที่มีเหรียญมากกว่า 10 เหรียญ รับเหรียญครึ่งหนึ่ง โดยปัดเศษลง (เฉพาะผู้สร้าง)"
   },
   {
     "id": "farmers_market",
@@ -197,7 +197,7 @@
     "name_en": "Farmers Market",
     "name_th": "ตลาดเกษตรกร",
     "effect_en": "Your wheat-symbol establishments earn +1 coin income when activated. (all players)",
-    "effect_th": "กิจการสัญลักษณ์รวงข้าวของผู้เล่นทุกคนได้รับรายได้เพิ่ม 1 เหรียญต่อใบเมื่อทำงาน (มีผลกับผู้เล่นทุกคน)"
+    "effect_th": "สิ่งปลูกสร้างสัญลักษณ์รวงข้าวของคุณได้รับรายได้เพิ่ม 1 เหรียญเมื่อทำงาน (ผู้เล่นทุกคน)"
   },
   {
     "id": "forge",
@@ -331,9 +331,9 @@
     "id": "city_hall",
     "type": "landmark",
     "name_en": "City Hall",
-    "name_th": "ศาลาว่าการเมือง",
+    "name_th": "ศาลากลาง",
     "effect_en": "If you roll 1 die and receive no coins, get 2 coins from the bank. (all players)",
-    "effect_th": "หากคุณทอยลูกเต๋า 1 ลูกและไม่ได้รับเหรียญเลย รับ 2 เหรียญจากธนาคาร (มีผลกับผู้เล่นทุกคน)"
+    "effect_th": "หากคุณทอยลูกเต๋า 1 ลูกแล้วไม่ได้รับเหรียญ รับ 2 เหรียญจากธนาคาร (ผู้เล่นทุกคน)"
   },
   {
     "id": "renovation_company",
