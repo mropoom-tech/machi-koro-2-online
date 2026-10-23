@@ -5,7 +5,7 @@ import {
 } from '@mk2/game-engine';
 import { CardDetail, CardTile, SymbolSummary } from './Card';
 import { Button, Coin, DemoBadge, Modal, ScrollRow } from './ui';
-import { playCoin, playDiceRoll, playYourTurn } from '../sound';
+import { playBuild, playCoin, playDiceRoll, playLandmark, playYourTurn } from '../sound';
 import { SoundSettings } from './SoundSettings';
 import { LangToggle, useI18n, type UiKey } from '../i18n';
 import type { ConnState } from '../net';
@@ -375,6 +375,16 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
   useEffect(() => {
     if (reveal.stage === 'rolling') playDiceRoll(reveal.dice);
   }, [reveal.stage]);
+  // Build sounds for anyone's build, as the entry appears in the (revealed) log.
+  const lastSeq = g.log.at(-1)?.seq ?? 0;
+  const prevSeq = useRef(lastSeq);
+  useEffect(() => {
+    const fresh = g.log.filter((e) => e.seq > prevSeq.current);
+    prevSeq.current = lastSeq;
+    if (fresh.some((e) => e.key === 'build_landmark')) playLandmark();
+    else if (fresh.some((e) => e.key === 'build')) playBuild();
+  }, [lastSeq]);
+
   // Coin sound when *my* displayed coins go up (after the dice reveal, so it lines up with the number).
   const myCoins = meP?.coins ?? 0;
   const prevCoins = useRef(myCoins);

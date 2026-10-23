@@ -109,3 +109,37 @@ export function playCoin() {
   tone(ac, 1318.5, t, 0.12, 0.12);
   tone(ac, 1760, t + 0.06, 0.2, 0.12);
 }
+
+/** Wooden hammer knock: low thump plus a short noise click. */
+function knock(ac: AudioContext, at: number, gain: number) {
+  const o = ac.createOscillator();
+  const g = ac.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(220, at);
+  o.frequency.exponentialRampToValueAtTime(90, at + 0.12);
+  g.gain.setValueAtTime(gain, at);
+  g.gain.exponentialRampToValueAtTime(0.001, at + 0.16);
+  o.connect(g).connect(out());
+  o.start(at);
+  o.stop(at + 0.2);
+  clack(ac, at, gain * 0.5);
+}
+
+/** Building an establishment: two hammer knocks. */
+export function playBuild() {
+  const ac = audio();
+  if (!ac) return;
+  const t = ac.currentTime;
+  knock(ac, t, 0.45);
+  knock(ac, t + 0.14, 0.35);
+}
+
+/** Building a landmark: hammer knocks, then a rising fanfare. */
+export function playLandmark() {
+  const ac = audio();
+  if (!ac) return;
+  const t = ac.currentTime;
+  knock(ac, t, 0.45);
+  knock(ac, t + 0.14, 0.35);
+  [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(ac, f, t + 0.32 + i * 0.1, 0.45, 0.18)); // C E G C
+}
