@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { getVolume, isMuted, playDiceRoll, playYourTurn, setMuted, setVolume } from '../sound';
+import { getVolume, isMuted, playCoin, playDiceRoll, playYourTurn, setMuted, setVolume } from '../sound';
 import { useI18n } from '../i18n';
 
 /** Header button that opens a small panel: volume slider, − / + buttons, mute, and test sounds. */
@@ -38,7 +38,7 @@ export function SoundSettings() {
         {icon}
       </button>
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-2xl bg-white p-4 text-slate-800 shadow-2xl ring-1 ring-black/10">
+        <div className="absolute left-0 top-full z-50 mt-2 w-72 rounded-2xl bg-white p-4 text-slate-800 shadow-2xl ring-1 ring-black/10">
           <div className="mb-3 flex items-center justify-between">
             <span className="font-semibold">{u('sound_settings')}</span>
             <span className="tabular-nums text-sm text-slate-500">{muted ? u('muted') : `${volume}%`}</span>
@@ -56,11 +56,13 @@ export function SoundSettings() {
             className={`mb-3 w-full rounded-xl px-3 py-2 text-sm font-semibold transition ${muted ? 'bg-rose-600 text-white' : 'bg-slate-100 hover:bg-slate-200'}`}>
             {muted ? `🔊 ${u('unmute')}` : `🔇 ${u('mute_all')}`}
           </button>
-          <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="grid grid-cols-3 gap-2 text-xs">
             <button type="button" onClick={() => playDiceRoll(2)} disabled={muted}
               className="rounded-lg bg-teal-50 px-2 py-1.5 font-medium text-teal-800 hover:bg-teal-100 disabled:opacity-40">🎲 {u('test_dice')}</button>
             <button type="button" onClick={() => playYourTurn()} disabled={muted}
               className="rounded-lg bg-teal-50 px-2 py-1.5 font-medium text-teal-800 hover:bg-teal-100 disabled:opacity-40">🔔 {u('test_turn')}</button>
+            <button type="button" onClick={() => playCoin()} disabled={muted}
+              className="rounded-lg bg-teal-50 px-2 py-1.5 font-medium text-teal-800 hover:bg-teal-100 disabled:opacity-40">🪙 {u('test_coin')}</button>
           </div>
         </div>
       )}

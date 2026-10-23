@@ -5,7 +5,7 @@ import {
 } from '@mk2/game-engine';
 import { CardDetail, CardTile, SymbolSummary } from './Card';
 import { Button, Coin, DemoBadge, Modal, ScrollRow } from './ui';
-import { playDiceRoll, playYourTurn } from '../sound';
+import { playCoin, playDiceRoll, playYourTurn } from '../sound';
 import { SoundSettings } from './SoundSettings';
 import { LangToggle, useI18n, type UiKey } from '../i18n';
 import type { ConnState } from '../net';
@@ -375,6 +375,13 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
   useEffect(() => {
     if (reveal.stage === 'rolling') playDiceRoll(reveal.dice);
   }, [reveal.stage]);
+  // Coin sound when *my* displayed coins go up (after the dice reveal, so it lines up with the number).
+  const myCoins = meP?.coins ?? 0;
+  const prevCoins = useRef(myCoins);
+  useEffect(() => {
+    if (myCoins > prevCoins.current) playCoin();
+    prevCoins.current = myCoins;
+  }, [myCoins]);
   const myTurnKey = myTurn && (g.phase === 'roll' || g.phase === 'setup') ? `${g.turn}:${g.setupRound}:${g.activeIndex}` : null;
   const prevTurnKey = useRef<string | null>(myTurnKey); // no chime for a turn already in progress on load
   useEffect(() => {

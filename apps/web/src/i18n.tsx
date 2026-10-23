@@ -175,6 +175,7 @@ const UI = {
   muted: { th: 'ปิดเสียงอยู่', en: 'Muted' },
   test_dice: { th: 'ลองเสียงเต๋า', en: 'Test dice' },
   test_turn: { th: 'ลองเสียงถึงตา', en: 'Test turn' },
+  test_coin: { th: 'ลองเสียงเหรียญ', en: 'Test coin' },
 } satisfies Record<string, Entry>;
 
 export type UiKey = keyof typeof UI;
