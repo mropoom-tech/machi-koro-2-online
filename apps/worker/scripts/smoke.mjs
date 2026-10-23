@@ -58,7 +58,7 @@ check(clients[1].errors.at(-1) === 'err_host_only_start', 'non-host cannot start
 
 clients[0].send({ t: 'start' });
 await Promise.all(clients.map((c) => c.until(() => c.room?.status === 'playing')));
-check(clients.every((c) => c.room.game.deckMode === 'DEMO_ONLY'), 'game started in DEMO_ONLY mode for everyone');
+check(clients.every((c) => c.room.game.deckMode === 'VERIFIED'), 'game started with the verified deck for everyone');
 check(clients.every((c) => c.room.game.decks === undefined && c.room.game.rngState === undefined), 'hidden deck/rng not leaked');
 
 const byPid = (pid) => clients.find((c) => c.playerId === pid);
