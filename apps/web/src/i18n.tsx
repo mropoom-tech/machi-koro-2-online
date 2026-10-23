@@ -118,6 +118,9 @@ const UI = {
   remove_last: { th: ' — เหลือผู้เล่นคนเดียว เกมจะจบและผู้เล่นที่เหลือชนะ', en: ' — only one player would remain, so the game ends and they win.' },
   remove: { th: 'นำออก', en: 'Remove' },
   you_win: { th: 'คุณชนะ!', en: 'You win!' },
+  view_details: { th: 'ดูรายละเอียด', en: 'View details' },
+  all_cities: { th: 'ภาพรวมทุกเมือง', en: 'All cities' },
+  show_result: { th: 'ดูผลการแข่งขัน', en: 'Show result' },
   x_wins: { th: (p) => `${p.name} ชนะ!`, en: (p) => `${p.name} wins!` },
   // offline banner
   offline_banner: { th: (p) => `${p.name} หลุดการเชื่อมต่อ`, en: (p) => `${p.name} is disconnected` },

@@ -4,9 +4,15 @@ import { useI18n } from '../i18n';
 import type { Note } from '../net';
 
 export function Modal({ open, onClose, children, wide }: { open: boolean; onClose?: () => void; children: ReactNode; wide?: boolean }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open || !onClose) return;
-    const h = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    // Only the top-most open dialog reacts to Escape (stacked modals close one at a time).
+    const h = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      const all = document.querySelectorAll('[role=dialog]');
+      if (all[all.length - 1] === dialogRef.current) onClose();
+    };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
   }, [open, onClose]);
@@ -15,6 +21,7 @@ export function Modal({ open, onClose, children, wide }: { open: boolean; onClos
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 backdrop-blur-sm sm:items-center" onClick={onClose}>
       <div
         role="dialog"
+        ref={dialogRef}
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
         className={`slide-up sm:pop-in max-h-[88vh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl ${wide ? 'sm:max-w-2xl' : 'sm:max-w-md'}`}

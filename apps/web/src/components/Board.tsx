@@ -238,10 +238,13 @@ const TONE = { roll: 'text-sky-700', gain: 'text-emerald-700', pay: 'text-rose-7
 function Log({ g }: { g: PublicGameState }) {
   const { m } = useI18n();
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => { ref.current?.scrollTo({ top: ref.current.scrollHeight, behavior: 'smooth' }); }, [g.log.length]);
+  // Newest entry first (like Board Game Arena); keep the top in view as entries arrive.
+  useEffect(() => { ref.current?.scrollTo({ top: 0, behavior: 'smooth' }); }, [g.log.length]);
   return (
     <div ref={ref} className="font-body max-h-full space-y-1 overflow-y-auto text-sm">
-      {g.log.map((e) => <div key={e.seq} className={`pop-in ${TONE[e.tone ?? 'info']}`}>{m(e.key, e.params)}</div>)}
+      {[...g.log].reverse().map((e, i) => (
+        <div key={e.seq} className={`pop-in ${TONE[e.tone ?? 'info']} ${i === 0 ? 'font-semibold' : ''}`}>{m(e.key, e.params)}</div>
+      ))}
     </div>
   );
 }
@@ -355,6 +358,8 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
   const [cardModal, setCardModal] = useState<string | null>(null);
   const [viewPlayer, setViewPlayer] = useState<string | null>(null);
   const [logOpen, setLogOpen] = useState(false);
+  const [resultHidden, setResultHidden] = useState(false); // victory screen dismissed to look at the board
+  const [overviewOpen, setOverviewOpen] = useState(false);
   const active = g.players[g.activeIndex];
   const myTurn = active.id === me && !revealing;
   const meP = g.players.find((p) => p.id === me);
@@ -502,10 +507,35 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
             </>
           )}
           {myTurn && g.phase === 'choice' && <p className="flex-1 text-slate-700">{u('waiting_choice')}</p>}
+          {winner && (
+            <>
+              <p className="hidden flex-1 font-semibold text-amber-700 sm:block">🏆 {u('x_wins', { name: winner.name })}</p>
+              <Button variant="secondary" onClick={() => setOverviewOpen(true)} className="flex-1 sm:flex-none">{u('all_cities')}</Button>
+              <Button variant="gold" onClick={() => setResultHidden(false)} className="flex-1 sm:flex-none">{u('show_result')}</Button>
+            </>
+          )}
         </div>
       </div>
 
       {g.phase === 'choice' && !revealing && <ChoicePanel key={g.log.length} g={g} me={me} act={act} />}
+
+      {/* All-cities overview comes before the card modal so a card opened from it shows on top. */}
+      <Modal open={overviewOpen} onClose={() => setOverviewOpen(false)} wide>
+        <h3 className="mb-4 text-xl font-bold">{u('all_cities')}</h3>
+        <div className="space-y-5">
+          {[...g.players].sort((a, b) => b.landmarks.length - a.landmarks.length || b.coins - a.coins).map((p) => (
+            <section key={p.id} className={`rounded-2xl p-3 ring-1 ${p.id === g.winnerId ? 'bg-amber-50 ring-amber-300' : 'bg-slate-50 ring-black/5'}`}>
+              <div className="mb-2 flex flex-wrap items-center gap-3">
+                <span className="text-lg font-bold">{p.id === g.winnerId && '🏆 '}{p.name}{p.id === me && <span className="text-slate-400"> ({u('you')})</span>}</span>
+                <span className="text-sm">🏗️ {p.landmarks.length}/{LANDMARKS_TO_WIN}</span>
+                <Coin n={p.coins} />
+              </div>
+              <SymbolSummary establishments={p.establishments} className="mb-2" />
+              <Tableau p={p} compact onCard={(id) => setCardModal(id)} />
+            </section>
+          ))}
+        </div>
+      </Modal>
 
       <Modal open={!!cardModal} onClose={() => setCardModal(null)}>
         {cardModal && (
@@ -572,7 +602,7 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
         <div className="max-h-[60vh]"><Log g={g} /></div>
       </Modal>
 
-      {winner && (
+      {winner && !resultHidden && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur">
           <div className="pop-in w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-2xl">
             <div className="text-7xl">🏆</div>
@@ -587,7 +617,10 @@ export function Board({ room, me, conn, act, onLeave, onSkipTurn, onRemovePlayer
                 </li>
               ))}
             </ul>
-            <Button onClick={onLeave} className="w-full">{u('back_home')}</Button>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button variant="gold" onClick={() => { setResultHidden(true); setOverviewOpen(true); }}>🔍 {u('view_details')}</Button>
+              <Button onClick={onLeave}>{u('back_home')}</Button>
+            </div>
           </div>
         </div>
       )}
