@@ -19,7 +19,7 @@
 - Client session: sessionStorage (ต่อแท็บ) + localStorage (fallback)
 
 ## คำสั่งทดสอบ & ผลล่าสุด
-- `npm test` → 38/38 passed
+- `npm test` → 40/40 passed
 - `npm run typecheck` (engine/worker/web) → ผ่าน; `npm run build:web` → ผ่าน (JS 61 KB gzip)
 - `smoke.mjs` 2/3/5 ผู้เล่น → ALL PASSED
 - `forfeit.mjs` (ยอมแพ้ / คนสุดท้ายชนะ / โอนหัวห้อง) → ALL PASSED
@@ -34,10 +34,23 @@
 - Deploy Worker ใหม่: `npx wrangler deploy` ใน `apps/worker` (ต้องรันใน Terminal ของผู้ใช้ — shell ของ agent อ่านไฟล์ login Wrangler คนละที่ ซึ่งยังเป็นบัญชีเก่า pcpdata117)
 - ทดสอบบน production: smoke 3 คน ALL PASSED, CORS: origin อื่นได้ 403, เล่น 2 แท็บบนเว็บจริง (สร้าง/เข้าร่วม/สร้างการ์ด/ทอย) ซิงก์ตรงกัน
 
+## TH/EN + ภาพการ์ด + ลูกเต๋าก่อนผล (2026-10-23)
+- **สองภาษา:** ปุ่ม TH/EN (จำไว้ใน localStorage ต่อเบราว์เซอร์) — ผู้เล่นในห้องเดียวกันเลือกคนละภาษาได้
+  - Server ส่ง *รหัสข้อความ* + params (log / error / notice) → แคตตาล็อกกลาง `packages/game-engine/src/i18n.ts`
+  - ข้อความ UI: `apps/web/src/i18n.tsx`; test ตรวจว่าทุกรหัสมีทั้ง TH/EN และไม่มีภาษาไทย hard-code ฝั่ง server
+- **ภาพการ์ด (ไม่สาธารณะ):** ต้นฉบับอยู่ใน `asset/` (gitignored) → `node tools/build-card-assets.mjs` → `apps/worker/card-assets/{th,en}/*.webp` (gitignored, 2.9 MB)
+  - Worker เสิร์ฟผ่าน Static Assets + `run_worker_first`; ต้องมีตั๋ว HMAC (`CARD_SIGNING_KEY` secret, อายุ 12 ชม.) ที่ได้ตอนเข้าห้อง — ไม่มีตั๋ว/ตั๋วปลอม = 403
+  - ข้อจำกัด: ใครก็สร้างห้องเองแล้วเห็นภาพได้ แต่ไม่มี URL สาธารณะถาวร ไม่อยู่ใน Git/GitHub Pages
+  - ตั้ง secret ใหม่: `node ../../tools/set-card-key.mjs` ใน `apps/worker` (ต้อง deploy Worker พร้อมโฟลเดอร์ card-assets ในเครื่อง)
+  - ผลตรวจปรู๊ฟภาพไทย: `docs/CARD_IMAGE_PROOFREAD.md` (6 ใบความหมายผิด/ตัวเลขหาย มีป้ายเตือนในหน้ารายละเอียด)
+- **ลูกเต๋าก่อนผล:** `useRevealedGame` ใน `Board.tsx` — ทอย 0.9 วิ → แสดงหน้าเต๋า + บรรทัดทอย 0.7 วิ → แล้วจึงแสดงเหรียญ/ความสามารถ/การเลือก/หน้าผู้ชนะ (ฝั่ง client เท่านั้น)
+- ทดสอบ: engine 40/40, smoke/forfeit/host/skip/remove/fullgame ผ่าน (remove.mjs เคย timeout 1 ครั้งในตัวจำลอง alarm บนเครื่อง ผ่านเมื่อรันซ้ำ), production smoke ผ่าน, ทดสอบ 2 แท็บ TH+EN บนเว็บจริง
+- ข้อสังเกต: ภาพโหลดครั้งแรกบน production ช้าหลายวินาที (ยังไม่อยู่ใน cache ของ edge)
+
 ## ปัญหา/ความเสี่ยงที่ยังเหลือ
 1. **จำนวนสำเนาการ์ดไม่มีหลักฐาน** → DEMO_ONLY (ดู `docs/RULE_ISSUES.md`) — ต้องการ Rulebook ต้นฉบับ
 2. ข้อสันนิษฐานกติกา #3–#11 ใน RULE_ISSUES ต้องตรวจกับ Rulebook
-3. ไม่มีภาพการ์ด → ใช้การ์ดวาดจากข้อมูล + emoji
+3. ภาพไทย 6 ใบข้อความผิด (ดู docs/CARD_IMAGE_PROOFREAD.md) — รอภาพที่แก้แล้ว; ภาพแลนด์มาร์ก EN ความละเอียดต่ำ
 4. ยังไม่ได้แยก `RoomDirectory` DO (ใช้ `idFromName(code)` ตรง ๆ + ตรวจชนรหัสตอนสร้าง) — เพียงพอสำหรับใช้กับเพื่อน
 5. ส่ง snapshot ทั้งห้องทุกครั้ง (ไม่ใช่ delta) — ขนาดเล็ก (~5–10 KB) จึงยังไม่จำเป็น
 6. (ปิดแล้ว) ระบบห้องครบ: ออก / มอบหัวห้อง / เชิญออก / ข้ามเทิร์น / นำออก / ยอมแพ้
