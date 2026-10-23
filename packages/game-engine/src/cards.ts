@@ -1,5 +1,6 @@
-// Card database transcribed from translations/Thai_Translation_Reference_*.md (v1.0).
-// English text is kept for traceability. quantityInDeck stays null: no verified source exists.
+// Card database. English text from the card faces; Thai names/effects follow the updated Thai card art
+// (asset/card_images/thai_previews/*/translations_*.txt, 2026-10-23) and otherwise translations/*.md.
+// Copy counts: see COPIES (user-confirmed).
 
 export type EstablishmentColor = 'red' | 'blue' | 'green' | 'purple';
 // Icons printed on the establishment cards (verified from the card art). 'tower' is the purple Major icon.
@@ -81,6 +82,30 @@ const PURPLE_TH = 'ม่วง — กิจการขนาดใหญ่';
 
 type EDef = Omit<EstablishmentCard, 'type' | 'categoryTh' | 'timing' | 'target' | 'assetPath' | 'quantityInDeck'>;
 
+/** Copies per establishment, from asset/Machi_Koro_2_Card_Inventory.xlsx (user-confirmed; 86 total per the rulebook). */
+const COPIES: Record<string, number> = {
+  sushi_bar: 5,
+  wheat_field: 5,
+  vineyard: 5,
+  bakery: 5,
+  cafe: 5,
+  convenience_store: 5,
+  flower_garden: 5,
+  forest: 5,
+  business_center: 3,
+  flower_shop: 3,
+  corn_field: 5,
+  stadium: 4,
+  furniture_factory: 3,
+  hamburger_stand: 4,
+  shopping_district: 3,
+  winery: 3,
+  family_restaurant: 5,
+  apple_orchard: 5,
+  food_warehouse: 3,
+  mine: 5,
+};
+
 function est(d: EDef): EstablishmentCard {
   const timing = d.color === 'blue' ? 'anyone' : d.color === 'red' ? 'opponent_turn' : 'your_turn';
   const target =
@@ -89,69 +114,69 @@ function est(d: EDef): EstablishmentCard {
     : d.effect.kind === 'exchange' ? 'chosen_opponent'
     : 'bank';
   const categoryTh = { red: RED_TH, blue: BLUE_TH, green: GREEN_TH, purple: PURPLE_TH }[d.color];
-  return { ...d, type: 'establishment', categoryTh, timing, target, assetPath: null, quantityInDeck: null };
+  return { ...d, type: 'establishment', categoryTh, timing, target, assetPath: null, quantityInDeck: COPIES[d.id] ?? null };
 }
 
 export const ESTABLISHMENTS: EstablishmentCard[] = [
-  est({ id: 'sushi_bar', nameEn: 'Sushi Bar', nameTh: 'ซูชิบาร์', color: 'red', symbol: 'cup', tier: 'low', activation: [1], cost: 2,
-    effectEn: 'Take 3 coins from the active player. (opponent’s turn)', effectTh: 'รับ 3 เหรียญจากผู้เล่นที่กำลังเล่นอยู่ (เฉพาะเทิร์นของผู้เล่นอื่น)',
+  est({ id: 'sushi_bar', nameEn: 'Sushi Bar', nameTh: 'ร้านซูชิ', color: 'red', symbol: 'cup', tier: 'low', activation: [1], cost: 2,
+    effectEn: 'Take 3 coins from the active player. (opponent’s turn)', effectTh: 'รับ 3 เหรียญจากผู้เล่นที่กำลังเล่นอยู่ (เฉพาะเทิร์นของฝ่ายตรงข้าม)',
     effect: { kind: 'take_from_active', amount: 3 } }),
-  est({ id: 'wheat_field', nameEn: 'Wheat Field', nameTh: 'ไร่ข้าวสาลี', color: 'blue', symbol: 'wheat', tier: 'low', activation: [1, 2], cost: 1,
-    effectEn: 'Get 1 coin from the bank. (anyone’s turn)', effectTh: 'รับ 1 เหรียญจากธนาคาร (ทุกเทิร์น)',
+  est({ id: 'wheat_field', nameEn: 'Wheat Field', nameTh: 'ทุ่งข้าวสาลี', color: 'blue', symbol: 'wheat', tier: 'low', activation: [1, 2], cost: 1,
+    effectEn: 'Get 1 coin from the bank. (anyone’s turn)', effectTh: 'รับ 1 เหรียญจากธนาคาร (ในเทิร์นของผู้เล่นคนใดก็ได้)',
     effect: { kind: 'bank', amount: 1 } }),
   est({ id: 'vineyard', nameEn: 'Vineyard', nameTh: 'ไร่องุ่น', color: 'blue', symbol: 'fruit', tier: 'low', activation: [2], cost: 1,
-    effectEn: 'Get 2 coins from the bank. (anyone’s turn)', effectTh: 'รับ 2 เหรียญจากธนาคาร (ทุกเทิร์น)',
+    effectEn: 'Get 2 coins from the bank. (anyone’s turn)', effectTh: 'รับ 2 เหรียญจากธนาคาร (ในเทิร์นของผู้เล่นคนใดก็ได้)',
     effect: { kind: 'bank', amount: 2 } }),
   est({ id: 'bakery', nameEn: 'Bakery', nameTh: 'ร้านเบเกอรี', color: 'green', symbol: 'shop', tier: 'low', activation: [2, 3], cost: 1,
     effectEn: 'Get 2 coins from the bank. (your turn only)', effectTh: 'รับ 2 เหรียญจากธนาคาร (เฉพาะเทิร์นของคุณ)',
     effect: { kind: 'bank', amount: 2 } }),
   est({ id: 'cafe', nameEn: 'Café', nameTh: 'คาเฟ่', color: 'red', symbol: 'cup', tier: 'low', activation: [3], cost: 1,
-    effectEn: 'Take 2 coins from the active player. (opponent’s turn)', effectTh: 'รับ 2 เหรียญจากผู้เล่นที่กำลังเล่นอยู่ (เฉพาะเทิร์นของผู้เล่นอื่น)',
+    effectEn: 'Take 2 coins from the active player. (opponent’s turn)', effectTh: 'รับ 2 เหรียญจากผู้เล่นเจ้าของเทิร์น (เฉพาะเทิร์นของคู่แข่ง)',
     effect: { kind: 'take_from_active', amount: 2 } }),
   est({ id: 'convenience_store', nameEn: 'Convenience Store', nameTh: 'ร้านสะดวกซื้อ', color: 'green', symbol: 'shop', tier: 'low', activation: [4], cost: 1,
     effectEn: 'Get 3 coins from the bank. (your turn only)', effectTh: 'รับ 3 เหรียญจากธนาคาร (เฉพาะเทิร์นของคุณ)',
     effect: { kind: 'bank', amount: 3 } }),
   est({ id: 'flower_garden', nameEn: 'Flower Garden', nameTh: 'สวนดอกไม้', color: 'blue', symbol: 'flower', tier: 'low', activation: [4], cost: 2,
-    effectEn: 'Get 2 coins from the bank. (anyone’s turn)', effectTh: 'รับ 2 เหรียญจากธนาคาร (ทุกเทิร์น)',
+    effectEn: 'Get 2 coins from the bank. (anyone’s turn)', effectTh: 'รับ 2 เหรียญจากธนาคาร (ในเทิร์นของผู้เล่นคนใดก็ได้)',
     effect: { kind: 'bank', amount: 2 } }),
   est({ id: 'forest', nameEn: 'Forest', nameTh: 'ป่าไม้', color: 'blue', symbol: 'gear', tier: 'low', activation: [5], cost: 3,
-    effectEn: 'Get 2 coins from the bank. (anyone’s turn)', effectTh: 'รับ 2 เหรียญจากธนาคาร (ทุกเทิร์น)',
+    effectEn: 'Get 2 coins from the bank. (anyone’s turn)', effectTh: 'รับ 2 เหรียญจากธนาคาร (ในเทิร์นของผู้เล่นคนใดก็ได้)',
     effect: { kind: 'bank', amount: 2 } }),
   est({ id: 'business_center', nameEn: 'Business Center', nameTh: 'ศูนย์ธุรกิจ', color: 'purple', symbol: 'tower', tier: 'low', activation: [6], cost: 3,
-    effectEn: 'Exchange 1 of your establishments for 1 an opponent owns. (your turn only)', effectTh: 'คุณอาจแลกกิจการของคุณ 1 ใบกับกิจการของผู้เล่นอื่น 1 ใบ (เฉพาะเทิร์นของคุณ)',
+    effectEn: 'Exchange 1 of your establishments for 1 an opponent owns. (your turn only)', effectTh: 'แลกเปลี่ยนสิ่งปลูกสร้างของคุณ 1 แห่ง กับสิ่งปลูกสร้างของผู้เล่นคนอื่นได้ 1 แห่ง (เฉพาะเทิร์นของคุณ)',
     effect: { kind: 'exchange' } }),
   est({ id: 'flower_shop', nameEn: 'Flower Shop', nameTh: 'ร้านดอกไม้', color: 'green', symbol: 'combo', tier: 'low', activation: [6], cost: 1,
-    effectEn: 'Get 3 coins from the bank for each flower-symbol establishment you own. (your turn only)', effectTh: 'รับ 3 เหรียญจากธนาคารต่อกิจการสัญลักษณ์ดอกไม้แต่ละใบที่คุณมี (เฉพาะเทิร์นของคุณ)',
+    effectEn: 'Get 3 coins from the bank for each flower-symbol establishment you own. (your turn only)', effectTh: 'รับ 3 เหรียญจากธนาคาร ต่อสิ่งปลูกสร้างสัญลักษณ์ดอกไม้ทุกแห่งที่คุณมี (เฉพาะเทิร์นของคุณ)',
     effect: { kind: 'bank_per_symbol', amount: 3, symbol: 'flower' } }),
   est({ id: 'corn_field', nameEn: 'Corn Field', nameTh: 'ไร่ข้าวโพด', color: 'blue', symbol: 'wheat', tier: 'high', activation: [7], cost: 2,
-    effectEn: 'Get 3 coins from the bank. (anyone’s turn)', effectTh: 'รับ 3 เหรียญจากธนาคาร (ทุกเทิร์น)',
+    effectEn: 'Get 3 coins from the bank. (anyone’s turn)', effectTh: 'รับ 3 เหรียญจากธนาคาร (ในเทิร์นของผู้เล่นคนใดก็ได้)',
     effect: { kind: 'bank', amount: 3 } }),
   est({ id: 'stadium', nameEn: 'Stadium', nameTh: 'สนามกีฬา', color: 'purple', symbol: 'tower', tier: 'high', activation: [7], cost: 3,
-    effectEn: 'Take 3 coins from each opponent. (your turn only)', effectTh: 'รับ 3 เหรียญจากผู้เล่นอื่นแต่ละคน (เฉพาะเทิร์นของคุณ)',
+    effectEn: 'Take 3 coins from each opponent. (your turn only)', effectTh: 'รับ 3 เหรียญจากผู้เล่นฝ่ายตรงข้ามแต่ละคน (เฉพาะเทิร์นของคุณ)',
     effect: { kind: 'take_from_each', amount: 3 } }),
   est({ id: 'furniture_factory', nameEn: 'Furniture Factory', nameTh: 'โรงงานเฟอร์นิเจอร์', color: 'green', symbol: 'combo', tier: 'high', activation: [8], cost: 4,
-    effectEn: 'Get 4 coins from the bank for each gear-symbol establishment you own. (your turn only)', effectTh: 'รับ 4 เหรียญจากธนาคารต่อกิจการสัญลักษณ์เฟืองแต่ละใบที่คุณมี (เฉพาะเทิร์นของคุณ)',
+    effectEn: 'Get 4 coins from the bank for each gear-symbol establishment you own. (your turn only)', effectTh: 'รับ 4 เหรียญจากธนาคารสำหรับสิ่งปลูกสร้างสัญลักษณ์เฟืองแต่ละแห่งที่คุณมี (เฉพาะเทิร์นของคุณ)',
     effect: { kind: 'bank_per_symbol', amount: 4, symbol: 'gear' } }),
   est({ id: 'hamburger_stand', nameEn: 'Hamburger Stand', nameTh: 'ร้านแฮมเบอร์เกอร์', color: 'red', symbol: 'cup', tier: 'high', activation: [8], cost: 1,
-    effectEn: 'Take 2 coins from the active player. (opponent’s turn)', effectTh: 'รับ 2 เหรียญจากผู้เล่นที่กำลังเล่นอยู่ (เฉพาะเทิร์นของผู้เล่นอื่น)',
+    effectEn: 'Take 2 coins from the active player. (opponent’s turn)', effectTh: 'รับ 2 เหรียญจากผู้เล่นที่กำลังเล่นอยู่ (เฉพาะเทิร์นของฝ่ายตรงข้าม)',
     effect: { kind: 'take_from_active', amount: 2 } }),
   est({ id: 'shopping_district', nameEn: 'Shopping District', nameTh: 'ย่านการค้า', color: 'purple', symbol: 'tower', tier: 'high', activation: [8, 9], cost: 3,
-    effectEn: 'From each opponent who has more than 10 coins, take half, rounded down. (your turn only)', effectTh: 'รับเหรียญจากผู้เล่นอื่นแต่ละคนที่มีมากกว่า 10 เหรียญ เป็นจำนวนครึ่งหนึ่งของเหรียญที่ผู้เล่นคนนั้นมี โดยปัดเศษลง (เฉพาะเทิร์นของคุณ)',
+    effectEn: 'From each opponent who has more than 10 coins, take half, rounded down. (your turn only)', effectTh: 'ได้รับเหรียญครึ่งหนึ่ง จากผู้เล่นฝ่ายตรงข้ามแต่ละคนที่มีเหรียญมากกว่า 10 เหรียญ โดยปัดเศษลง (เฉพาะเทิร์นของคุณ)',
     effect: { kind: 'take_half_if_over', threshold: 10 } }),
   est({ id: 'winery', nameEn: 'Winery', nameTh: 'โรงบ่มไวน์', color: 'green', symbol: 'combo', tier: 'high', activation: [9], cost: 3,
-    effectEn: 'Get 3 coins from the bank for each fruit-symbol establishment you own. (your turn only)', effectTh: 'รับ 3 เหรียญจากธนาคารต่อกิจการสัญลักษณ์ผลไม้แต่ละใบที่คุณมี (เฉพาะเทิร์นของคุณ)',
+    effectEn: 'Get 3 coins from the bank for each fruit-symbol establishment you own. (your turn only)', effectTh: 'รับ 3 เหรียญจากธนาคารสำหรับสิ่งปลูกสร้างสัญลักษณ์ผลไม้แต่ละแห่งที่คุณมี (เฉพาะเทิร์นของคุณ)',
     effect: { kind: 'bank_per_symbol', amount: 3, symbol: 'fruit' } }),
   est({ id: 'family_restaurant', nameEn: 'Family Restaurant', nameTh: 'ร้านอาหารครอบครัว', color: 'red', symbol: 'cup', tier: 'high', activation: [9, 10], cost: 2,
-    effectEn: 'Take 2 coins from the active player. (opponent’s turn)', effectTh: 'รับ 2 เหรียญจากผู้เล่นที่กำลังเล่นอยู่ (เฉพาะเทิร์นของผู้เล่นอื่น)',
+    effectEn: 'Take 2 coins from the active player. (opponent’s turn)', effectTh: 'รับ 2 เหรียญจากผู้เล่นเจ้าของเทิร์น (เฉพาะเทิร์นของคู่แข่ง)',
     effect: { kind: 'take_from_active', amount: 2 } }),
   est({ id: 'apple_orchard', nameEn: 'Apple Orchard', nameTh: 'สวนแอปเปิล', color: 'blue', symbol: 'fruit', tier: 'high', activation: [10], cost: 1,
-    effectEn: 'Get 3 coins from the bank. (anyone’s turn)', effectTh: 'รับ 3 เหรียญจากธนาคาร (ทุกเทิร์น)',
+    effectEn: 'Get 3 coins from the bank. (anyone’s turn)', effectTh: 'รับ 3 เหรียญจากธนาคาร (ในเทิร์นของผู้เล่นคนใดก็ได้)',
     effect: { kind: 'bank', amount: 3 } }),
-  est({ id: 'food_warehouse', nameEn: 'Food Warehouse', nameTh: 'คลังอาหาร', color: 'green', symbol: 'combo', tier: 'high', activation: [10, 11], cost: 2,
-    effectEn: 'Get 2 coins from the bank for each cup-symbol establishment you own. (your turn only)', effectTh: 'รับ 2 เหรียญจากธนาคารต่อกิจการสัญลักษณ์ถ้วยแต่ละใบที่คุณมี (เฉพาะเทิร์นของคุณ)',
+  est({ id: 'food_warehouse', nameEn: 'Food Warehouse', nameTh: 'คลังสินค้าอาหาร', color: 'green', symbol: 'combo', tier: 'high', activation: [10, 11], cost: 2,
+    effectEn: 'Get 2 coins from the bank for each cup-symbol establishment you own. (your turn only)', effectTh: 'รับ 2 เหรียญจากธนาคาร ต่อสิ่งปลูกสร้างสัญลักษณ์ถ้วยกาแฟทุกแห่งที่คุณมี (เฉพาะเทิร์นของคุณ)',
     effect: { kind: 'bank_per_symbol', amount: 2, symbol: 'cup' } }),
-  est({ id: 'mine', nameEn: 'Mine', nameTh: 'เหมืองแร่', color: 'blue', symbol: 'gear', tier: 'high', activation: [11, 12], cost: 4,
-    effectEn: 'Get 6 coins from the bank. (anyone’s turn)', effectTh: 'รับ 6 เหรียญจากธนาคาร (ทุกเทิร์น)',
+  est({ id: 'mine', nameEn: 'Mine', nameTh: 'เหมือง', color: 'blue', symbol: 'gear', tier: 'high', activation: [11, 12], cost: 4,
+    effectEn: 'Get 6 coins from the bank. (anyone’s turn)', effectTh: 'รับ 6 เหรียญจากธนาคาร (ในเทิร์นของผู้เล่นคนใดก็ได้)',
     effect: { kind: 'bank', amount: 6 } }),
 ];
 
@@ -159,14 +184,15 @@ const STD = [12, 16, 22];
 const CHEAP = [10, 14, 22];
 
 type LDef = Omit<LandmarkCard, 'type' | 'assetPath' | 'quantityInDeck'>;
-const lm = (d: LDef): LandmarkCard => ({ ...d, type: 'landmark', assetPath: null, quantityInDeck: null });
+// All 23 pictured landmarks are in the deck, one copy each (confirmed by the user, 2026-10-23).
+const lm = (d: LDef): LandmarkCard => ({ ...d, type: 'landmark', assetPath: null, quantityInDeck: 1 });
 
 export const LANDMARKS: LandmarkCard[] = [
   lm({ id: 'airport', nameEn: 'Airport', nameTh: 'สนามบิน', costs: STD, duration: 'ongoing', scope: 'all_players',
-    effectEn: 'If you don’t build anything on your turn, get 5 coins from the bank. (all players)', effectTh: 'หากคุณไม่ได้สร้างการ์ดใดเลยในเทิร์นของคุณ รับ 5 เหรียญจากธนาคาร (มีผลกับผู้เล่นทุกคน)',
+    effectEn: 'If you don’t build anything on your turn, get 5 coins from the bank. (all players)', effectTh: 'หากคุณไม่ได้สร้างสิ่งปลูกสร้างใดเลยในเทิร์นของคุณ รับ 5 เหรียญจากธนาคาร (ทุกผู้เล่น)',
     effect: { kind: 'no_build_bank', amount: 5 } }),
   lm({ id: 'amusement_park', nameEn: 'Amusement Park', nameTh: 'สวนสนุก', costs: STD, duration: 'ongoing', scope: 'all_players',
-    effectEn: 'If you roll doubles, take another turn after this one. (all players)', effectTh: 'หากคุณทอยลูกเต๋า 2 ลูกได้แต้มเหมือนกัน เล่นเพิ่มอีก 1 เทิร์นหลังจบเทิร์นนี้ (มีผลกับผู้เล่นทุกคน)',
+    effectEn: 'If you roll doubles, take another turn after this one. (all players)', effectTh: 'หากคุณทอยลูกเต๋าได้แต้มคู่ (ลูกเต๋า 2 ลูกแต้มเหมือนกัน) ให้เล่นเทิร์นอีกรอบหนึ่งได้ (ทุกผู้เล่น)',
     effect: { kind: 'doubles_extra_turn' } }),
   lm({ id: 'charterhouse', nameEn: 'Charterhouse', nameTh: 'ชาร์เตอร์เฮาส์', costs: STD, duration: 'ongoing', scope: 'all_players',
     effectEn: 'If you roll 2 dice and receive no coins, get 3 coins from the bank. (all players)', effectTh: 'หากคุณทอยลูกเต๋า 2 ลูกและไม่ได้รับเหรียญเลย รับ 3 เหรียญจากธนาคาร (มีผลกับผู้เล่นทุกคน)',

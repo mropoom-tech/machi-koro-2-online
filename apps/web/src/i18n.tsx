@@ -192,7 +192,7 @@ const SYMBOL: Record<CardSymbol, { th: string; en: string }> = {
 
 /** Thai card images whose printed text is wrong or incomplete (docs/CARD_IMAGE_PROOFREAD.md). */
 export const TH_IMAGE_ISSUES = new Set([
-  'publisher', 'moving_company', 'museum', 'shopping_mall', 'soda_bottling_plant', 'renovation_company', 'winery', 'business_center',
+  'publisher', 'moving_company', 'museum', 'shopping_mall', 'soda_bottling_plant', 'renovation_company', 'charterhouse',
 ]);
 
 const STORAGE_KEY = 'mk2:lang';

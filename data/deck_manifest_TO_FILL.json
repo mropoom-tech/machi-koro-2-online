@@ -7,175 +7,175 @@
   "cards": [
     {
       "id": "sushi_bar",
-      "quantity_in_deck": null
+      "quantity_in_deck": 5
     },
     {
       "id": "wheat_field",
-      "quantity_in_deck": null
+      "quantity_in_deck": 5
     },
     {
       "id": "vineyard",
-      "quantity_in_deck": null
+      "quantity_in_deck": 5
     },
     {
       "id": "bakery",
-      "quantity_in_deck": null
+      "quantity_in_deck": 5
     },
     {
       "id": "cafe",
-      "quantity_in_deck": null
+      "quantity_in_deck": 5
     },
     {
       "id": "convenience_store",
-      "quantity_in_deck": null
+      "quantity_in_deck": 5
     },
     {
       "id": "flower_garden",
-      "quantity_in_deck": null
+      "quantity_in_deck": 5
     },
     {
       "id": "forest",
-      "quantity_in_deck": null
+      "quantity_in_deck": 5
     },
     {
       "id": "business_center",
-      "quantity_in_deck": null
+      "quantity_in_deck": 3
     },
     {
       "id": "flower_shop",
-      "quantity_in_deck": null
+      "quantity_in_deck": 3
     },
     {
       "id": "corn_field",
-      "quantity_in_deck": null
+      "quantity_in_deck": 5
     },
     {
       "id": "stadium",
-      "quantity_in_deck": null
+      "quantity_in_deck": 4
     },
     {
       "id": "furniture_factory",
-      "quantity_in_deck": null
+      "quantity_in_deck": 3
     },
     {
       "id": "hamburger_stand",
-      "quantity_in_deck": null
+      "quantity_in_deck": 4
     },
     {
       "id": "shopping_district",
-      "quantity_in_deck": null
+      "quantity_in_deck": 3
     },
     {
       "id": "winery",
-      "quantity_in_deck": null
+      "quantity_in_deck": 3
     },
     {
       "id": "family_restaurant",
-      "quantity_in_deck": null
+      "quantity_in_deck": 5
     },
     {
       "id": "apple_orchard",
-      "quantity_in_deck": null
+      "quantity_in_deck": 5
     },
     {
       "id": "food_warehouse",
-      "quantity_in_deck": null
+      "quantity_in_deck": 3
     },
     {
       "id": "mine",
-      "quantity_in_deck": null
+      "quantity_in_deck": 5
     },
     {
       "id": "airport",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "amusement_park",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "charterhouse",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "exhibit_hall",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "farmers_market",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "forge",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "french_restaurant",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "launch_pad",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "loan_office",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "moving_company",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "museum",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "observatory",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "park",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "publisher",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "radio_tower",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "shopping_mall",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "soda_bottling_plant",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "tech_startup",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "temple",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "tv_station",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "private_club",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "city_hall",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     },
     {
       "id": "renovation_company",
-      "quantity_in_deck": null
+      "quantity_in_deck": 1
     }
   ],
   "demo_only_fixture": {

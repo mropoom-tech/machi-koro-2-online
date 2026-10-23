@@ -35,12 +35,20 @@ describe('card database', () => {
     for (const c of [...ESTABLISHMENTS, ...LANDMARKS]) {
       expect(c.nameTh.length).toBeGreaterThan(0);
       expect(c.effectTh.length).toBeGreaterThan(0);
-      expect(c.quantityInDeck).toBeNull(); // copies unverified
+      expect(c.quantityInDeck).toBeGreaterThan(0);
     }
   });
-  it('has no verified deck yet, so only DEMO_ONLY is available', () => {
-    expect(verifiedDeck()).toBeNull();
-    expect(DEMO_DECK.mode).toBe('DEMO_ONLY');
+  it('uses the confirmed deck: 86 establishments (rulebook total) + 23 landmarks', () => {
+    const deck = verifiedDeck()!;
+    expect(deck.mode).toBe('VERIFIED');
+    const sum = (ids: string[]) => ids.reduce((a, id) => a + deck.copies[id], 0);
+    expect(sum(ESTABLISHMENTS.map((c) => c.id))).toBe(86);
+    expect(sum(LANDMARKS.map((c) => c.id))).toBe(23);
+    const g = createGame(names(3), deck, 11);
+    expect(g.deckMode).toBe('VERIFIED');
+    const inPlay = (row: 'low' | 'high' | 'landmark') => g.decks[row].length + g.market[row].reduce((a, m) => a + m.count, 0);
+    expect(inPlay('low') + inPlay('high')).toBe(86);
+    expect(inPlay('landmark')).toBe(23);
   });
 });
 

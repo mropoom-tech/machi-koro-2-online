@@ -10,13 +10,14 @@ const OUT = 'apps/worker/card-assets';
 const proofIdx = process.argv.indexOf('--proof');
 const proofDir = proofIdx > 0 ? process.argv[proofIdx + 1] : null;
 const WIDTH = 480;
+const isImage = (f) => /\.(png|jpe?g|webp)$/i.test(f); // folders may also hold notes (.txt)
 
 const jobs = [];
 for (const kind of ['establishments', 'landmarks']) {
-  for (const f of readdirSync(join(SRC, 'original', kind))) {
+  for (const f of readdirSync(join(SRC, 'original', kind)).filter(isImage)) {
     jobs.push({ lang: 'en', id: basename(f).replace(/\.\w+$/, ''), file: join(SRC, 'original', kind, f) });
   }
-  for (const f of readdirSync(join(SRC, 'thai_previews', kind))) {
+  for (const f of readdirSync(join(SRC, 'thai_previews', kind)).filter(isImage)) {
     jobs.push({ lang: 'th', id: basename(f).replace(/_TH\.\w+$/, ''), file: join(SRC, 'thai_previews', kind, f) });
   }
 }
